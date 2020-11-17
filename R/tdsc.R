@@ -21,7 +21,19 @@ a_tdsc <- function(db, force=FALSE) {
       dbExecute(db, paste0("DELETE FROM `analysis-tdsc` WHERE source = '",ss[[j,"source"]],"' AND id=",ss[[j,"id"]]))
       }
 
-    if (ss[[j, "Duration"]] == 0) next()
+    sql <- paste0("SELECT `source`, `id` FROM `analysis-tdsc` WHERE `source` = '",ss[[j,"source"]],"' AND id=",ss[[j,"id"]])
+    res <- dbSendQuery(db, sql)
+    dbFetch(res)
+
+    if (dbGetRowCount(res) >= ss[[j, "Duration"]] - 1) {
+      print("File already calculated -- skipping")
+      next()
+    }
+
+    if (ss[[j, "Duration"]] == 0) {
+      print("Provided duration is zero -- skipping")
+      next()
+    }
 
     tmp <- tempfile()
     downloaded <- tryCatch({
