@@ -4,10 +4,22 @@
 \alias{a_tdsc}
 \title{Time domain signal coding}
 \usage{
-a_tdsc(db, force = FALSE)
+a_tdsc(db, source, id, file, type, duration, tmp, force = FALSE)
 }
 \arguments{
 \item{db}{database connector}
+
+\item{source}{Source}
+
+\item{id}{id (unique within source)}
+
+\item{file}{url to file}
+
+\item{type}{MIME type}
+
+\item{duration}{audio duration}
+
+\item{tmp}{Location to download temp file}
 
 \item{force}{If TRUE recalculates all values}
 }
