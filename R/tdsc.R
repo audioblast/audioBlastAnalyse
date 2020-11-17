@@ -32,12 +32,13 @@ a_tdsc <- function(db, force=FALSE) {
     })
     if (inherits(downloaded, "error")) next()
 
-    w <- readWave(tmp)
-    sr <- w@samp.rate
-    ln <- length(w@left)
-    d <- floor(ln/sr)
+    d <- ss[[j, "Duration"]]
     for (i in 1:d) {
-      w <- readWave(tmp, from=(i-1)*sr, to=min(i*sr, ln), units="samples")
+      if (i == d) {
+        w <- readWave(tmp, from=(i-1), units="seconds")
+      } else {
+        w <- readWave(tmp, from=(i-1), to=i, units="seconds")
+      }
 
       sql <- paste0("SELECT `source`, `id` FROM `analysis-tdsc` WHERE `source` = '",ss[[j,"source"]],"' AND id=",ss[[j,"id"]]," AND startTime = ",(i-1))
       res <- dbSendQuery(db, sql)
