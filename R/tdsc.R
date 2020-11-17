@@ -19,16 +19,10 @@
 
 a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
   if (force==TRUE) {
-    dbExecute(db, paste0("DELETE FROM `analysis-tdsc` WHERE source = '",source,"' AND id=",id))
-    }
+    deleteAnalysis(db, "analysis-tdsc", source, id)
+  }
 
-  sql <- paste0("SELECT `source`, `id` FROM `analysis-tdsc` WHERE `source` = '",source,"' AND id=",id)
-  res <- dbSendQuery(db, sql)
-  dbFetch(res)
-
-  print(paste("Duration:", duration))
-  print(paste("Row count:", dbGetRowCount(res)))
-  if (dbGetRowCount(res) >= duration - 1) {
+  if (analysedRowCount(db, "analysis-tdsc", source, id) >= duration - 1) {
     print("File already calculated -- skipping")
     return()
   }
@@ -38,10 +32,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
   }
 
   for (i in 1:duration) {
-    sql <- paste0("SELECT `source`, `id` FROM `analysis-tdsc` WHERE `source` = '",source,"' AND id=",id," AND startTime = ",(i-1))
-    res <- dbSendQuery(db, sql)
-    dbFetch(res)
-    if (dbGetRowCount(res) != 0) {
+    if (rowAnalysed(db, "analysis-tdsc", source, id, (i-1))) {
       #print("Skip existing result.")
     } else {
       tryCatch({
@@ -53,12 +44,10 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
           w <- readWave(tmp, from=(i-1), to=i, units="seconds")
         }
         v <- tdsc(w, max_D=14)
-        sql <- paste0("INSERT INTO `analysis-tdsc` VALUES ('",source,"', ",id," ,1 , ",(i-1),", '", toJSON(v@a_matrix),"')")
-        dbExecute(db, sql)
+        insertAnalysis(db, "analysis-tdsc", source, id, 1, toJSON(v@a_matrix))
       }, error = function(e) {
         print(e)
       })
     }
-    dbClearResult(res)
   }
 }
