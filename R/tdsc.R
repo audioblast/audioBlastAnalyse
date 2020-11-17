@@ -25,6 +25,8 @@ a_tdsc <- function(db, force=FALSE) {
     res <- dbSendQuery(db, sql)
     dbFetch(res)
 
+    print(paste("Duration:", ss[[j, "Duration"]]))
+    print(paste("Row count:", dbGetRowCount(res)))
     if (dbGetRowCount(res) >= ss[[j, "Duration"]] - 1) {
       print("File already calculated -- skipping")
       next()
