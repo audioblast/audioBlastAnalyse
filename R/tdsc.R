@@ -44,7 +44,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
           w <- readWave(tmp, from=(i-1), to=i, units="seconds")
         }
         v <- tdsc(w, max_D=14)
-        insertAnalysis(db, "analysis-tdsc", source, id, 1, toJSON(v@a_matrix))
+        insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
       }, error = function(e) {
         print(e)
       })
