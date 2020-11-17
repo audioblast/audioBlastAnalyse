@@ -11,6 +11,7 @@ analysedRowCount <- function(db, table, source, id){
 
 rowAnalysed <- function(db, table, source, id, startTime){
   sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id=",id," AND startTime = ",startTime)
+  print(sql)
   res <- dbSendQuery(db, sql)
   dbFetch(res)
   if (dbGetRowCount(res) != 0) {
