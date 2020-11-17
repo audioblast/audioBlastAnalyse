@@ -9,6 +9,7 @@ analyse <- function(db, force=FALSE) {
   dbClearResult(res)
 
   for (i in 1:nrow(ss)) {
+    print(ss[i, "file"])
     tmp <- tempfile()
     a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
     unlink(tmp)
