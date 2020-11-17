@@ -1,0 +1,19 @@
+Package: audioBlastAnalyse
+Title: Analysis service for audioBLAST!
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Ed",
+           family = "Baker",
+           role = c("aut", "cre"),
+           email = "ed@ebaker.me.uk")
+Description: Runs any R based analysis for audioBLAST!
+License: GPL-3
+Encoding: UTF-8
+Language: en-US
+Imports: DBI, RMariaDB, seewave, tdsc, curl, tuneR, rjson
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Suggests:
+    spelling,
+    testthat
