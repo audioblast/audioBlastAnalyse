@@ -39,7 +39,7 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
       #print("Skip existing result.")
     } else {
 
-      if (i*30 - (i-1)*30 < 0) return()
+      if (duration - (i-1)*30 < 0) return()
       dl_file(file, tmp)
       if (i == duration) {
         w <- readAudio(tmp, from=(i-1)*30, units="seconds")
