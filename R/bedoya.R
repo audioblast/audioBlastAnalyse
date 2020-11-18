@@ -14,7 +14,7 @@
 #' @importFrom DBI dbConnect dbSendQuery dbFetch dbClearResult dbExecute dbGetRowCount
 #' @importFrom curl curl_download
 #' @importFrom tuneR readWave
-#' @importFrom sonicscrewdriver rainfallDetection
+#' @importFrom sonicscrewdriver rainfallDetection readAudio
 #' @importFrom rjson toJSON
 
 a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
@@ -40,9 +40,9 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
       if (i*30 - (i-1)*30 < 0) return()
       dl_file(file, tmp)
       if (i == duration) {
-        w <- readWave(tmp, from=(i-1)*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*30, units="seconds")
       } else {
-        w <- readWave(tmp, from=(i-1)*30, to=i*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*30, to=i*30, units="seconds")
       }
       v <- rainfallDetection(w, method="bedoya2017")
       insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, v)

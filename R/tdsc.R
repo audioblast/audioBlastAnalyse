@@ -16,6 +16,7 @@
 #' @importFrom tuneR readWave
 #' @importFrom tdsc tdsc
 #' @importFrom rjson toJSON
+#' @importFrom sonicscrewdriver readAudio
 
 a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
   if (force==TRUE) {
@@ -39,9 +40,9 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
         if (duration - (i-1) < 0) return()
         dl_file(file, tmp)
         if (i == duration) {
-          w <- readWave(tmp, from=(i-1), units="seconds")
+          w <- readAudio(tmp, from=(i-1), units="seconds")
         } else {
-          w <- readWave(tmp, from=(i-1), to=i, units="seconds")
+          w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
         }
         v <- tdsc(w, max_D=14)
         insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
