@@ -1,6 +1,6 @@
 #' Rainfall
 #'
-#' Calculates rainfall using bedoya
+#' Calculates rainfall using Bedoya's method
 #'
 #' @param db database connector
 #' @param source Source

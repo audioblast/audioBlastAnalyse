@@ -24,5 +24,5 @@ a_bedoya(db, source, id, file, type, duration, tmp, force = FALSE)
 \item{force}{If TRUE recalculates all values}
 }
 \description{
-Calculates rainfall using bedoya
+Calculates rainfall using Bedoya's method
 }
