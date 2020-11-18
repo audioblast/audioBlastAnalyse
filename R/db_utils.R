@@ -8,7 +8,6 @@ analysedRowCount <- function(db, table, source, id){
     dbFetch(res)
     rc <- dbGetRowCount(res)
     dbClearResult(res)
-    print(rc)
     return(rc)
 }
 
