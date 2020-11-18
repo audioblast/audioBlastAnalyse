@@ -6,14 +6,18 @@ analysedRowCount <- function(db, table, source, id){
     sql <- paste0("SELECT `source`, `id` FROM `", table, "` WHERE `source` = '",source,"' AND id=",id)
     res <- dbSendQuery(db, sql)
     dbFetch(res)
-    return(dbGetRowCount(res))
+    rc <- dbGetRowCount(res)
+    dbClearResult(res)
+    return(rc)
 }
 
 rowAnalysed <- function(db, table, source, id, startTime){
     sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id=",id," AND startTime = ",startTime)
     res <- dbSendQuery(db, sql)
     dbFetch(res)
-    if (dbGetRowCount(res) != 0) {
+    rc <- dbGetRowCount(res)
+    dbClearResult(res)
+    if (rc != 0) {
       return(TRUE)
     } else {
       return(FALSE)
