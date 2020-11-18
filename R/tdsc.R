@@ -35,7 +35,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
     if (rowAnalysed(db, "analysis-tdsc", source, id, (i-1))) {
       #print("Skip existing result.")
     } else {
-      tryCatch({
+
         if (duration - (i-1) < 0) return()
         dl_file(file, tmp)
         if (i == duration) {
@@ -45,9 +45,6 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
         }
         v <- tdsc(w, max_D=14)
         insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
-      }, error = function(e) {
-        print(e)
-      })
     }
   }
 }
