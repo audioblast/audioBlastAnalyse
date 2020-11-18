@@ -45,7 +45,7 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
         w <- readWave(tmp, from=(n-1)*30, to=n*30, units="seconds")
       }
       v <- rainfallDetection(w, method="bedoya2017")
-      insertAnalysis(db, "analysis-tdsc", source, id, 30, (n-1)*30, v)
+      insertAnalysis(db, "analysis-bedoya", source, id, 30, (n-1)*30, v)
     }
   }
 }
