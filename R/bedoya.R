@@ -39,7 +39,7 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
 
       if (i*30 - (i-1)*30 < 0) return()
       dl_file(file, tmp)
-      if (n == duration) {
+      if (i == duration) {
         w <- readWave(tmp, from=(i-1)*30, units="seconds")
       } else {
         w <- readWave(tmp, from=(i-1)*30, to=i*30, units="seconds")
