@@ -11,8 +11,7 @@ analyse <- function(db, force=FALSE) {
 
   for (i in 1:nrow(ss)) {
     skip = c(
-      "http://bio.acousti.ca/sites/default/files/ex2m_crepitationURTACuchiLaurelPlateau1106_31grad190315_003.wav",
-      "http://bio.acousti.ca/sites/default/files/185988.WAV"
+      "http://bio.acousti.ca/sites/default/files/137237.WAV"
     );
     if (ss[i, "file"] %in% skip) next()
     print(ss[i, "file"])
