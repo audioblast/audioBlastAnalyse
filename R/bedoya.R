@@ -32,7 +32,7 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
   }
 
   n <- floor(duration/30)
-  for (i in (1:n)*30) {
+  for (i in (1:n)) {
     if (rowAnalysed(db, "analysis-bedoya", source, id, (i-1)*30)) {
       #print("Skip existing result.")
     } else {
