@@ -35,6 +35,7 @@ rowAnalysed <- function(db, table, source, id, startTime){
 
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   tryCatch({
+    print(sql)
     sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",startTime,", '", result,"')")
     dbExecute(db, sql)
   }, error = function(e) {
