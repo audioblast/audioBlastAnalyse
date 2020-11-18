@@ -11,11 +11,8 @@ analyse <- function(db, force=FALSE) {
   for (i in 1:nrow(ss)) {
     print(ss[i, "file"])
     tmp <- tempfile()
-    tryCatch({
-      a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
-    }, error = function(e) {
-      print(e)
-    })
+    a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
+    a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
    unlink(tmp)
   }
 
