@@ -45,6 +45,8 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
           w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
         }
         if (length(w@left)==0) {
+          #Where duration provided is longer than actual duration read insert a NULL
+          #This prevents the file being unnecessarily downloaded and analysed again each time
           insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, NULL)
           next()
         }

@@ -47,6 +47,8 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
         w <- readAudio(tmp, from=(i-1)*30, to=i*30, units="seconds")
       }
       if (length(w@left)==0) {
+        #Where duration provided is longer than actual duration read insert a NULL
+        #This prevents the file being unnecessarily downloaded and analysed again each time
         insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, NULL)
         next()
       }
