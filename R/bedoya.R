@@ -46,7 +46,10 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
       } else {
         w <- readAudio(tmp, from=(i-1)*30, to=i*30, units="seconds")
       }
-      if (length(w@left)==0) next()
+      if (length(w@left)==0) {
+        insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, NULL)
+        next()
+      }
       v <- rainfallDetection(w, method="bedoya2017")
       insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, v)
     }

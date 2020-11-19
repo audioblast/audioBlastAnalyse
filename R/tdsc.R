@@ -44,7 +44,10 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
         } else {
           w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
         }
-        if (length(w@left)==0) next()
+        if (length(w@left)==0) {
+          insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, NULL)
+          next()
+        }
         v <- tdsc(w, max_D=14)
         insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
     }
