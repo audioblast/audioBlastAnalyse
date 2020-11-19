@@ -11,6 +11,7 @@ analyse <- function(db, force=FALSE) {
 
   for (i in 1:nrow(ss)) {
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
+    if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") next()
     print(ss[i, "file"])
     tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     print("TDSC")
