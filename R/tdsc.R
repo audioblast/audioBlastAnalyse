@@ -31,6 +31,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
     print("Provided duration is zero -- skipping")
     return()
   }
+  print(duration)
 
   for (i in 1:duration) {
     if (rowAnalysed(db, "analysis-tdsc", source, id, (i-1))) {
