@@ -10,7 +10,7 @@ analyse <- function(db, force=FALSE) {
   dbClearResult(res)
 
   for (i in 1:nrow(ss)) {
- #   if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/137237.WAV") next()
+    if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
     print(ss[i, "file"])
     tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     print("TDSC")
