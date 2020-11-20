@@ -3,12 +3,12 @@ deleteAnalysis <- function(db, table, source, id){
 }
 
 analysedRowCount <- function(db, table, source, id){
-    sql <- paste0("SELECT `source`, `id` FROM `", table, "` WHERE `source` = '",source,"' AND id=",id)
+    sql <- paste0("SELECT COUNT(*) FROM `", table, "` WHERE `source` = '",source,"' AND id=",id)
     res <- dbSendQuery(db, sql)
     dbFetch(res)
-    rc <- dbGetRowCount(res)
+    a <- dbFetch(res)
     dbClearResult(res)
-    return(rc)
+    return(a[[1,1]])
 }
 
 rowAnalysed <- function(db, table, source, id, startTime){
