@@ -1,5 +1,8 @@
 deleteAnalysis <- function(db, table, source, id){
-    dbExecute(db, paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id=",id))
+    dbExecute(
+      db,
+      paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id=",id)
+      )
 }
 
 analysedRowCount <- function(db, table, source, id){
@@ -26,5 +29,15 @@ rowAnalysed <- function(db, table, source, id, startTime){
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
     sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",startTime,", '", result,"')")
     dbExecute(db, sql)
+}
+
+fetchTable <- function(db, table) {
+  res <- dbSendQuery(
+    db,
+    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`",table,"recordings`")
+    )
+  ss <- dbFetch(res)
+  dbClearResult(res)
+  return(ss)
 }
 

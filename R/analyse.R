@@ -6,9 +6,7 @@
 #' @importFrom tools file_ext
 #' @export
 analyse <- function(db, force=FALSE, verbose=FALSE) {
-  res <- dbSendQuery(db, "SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`recordings`")
-  ss <- dbFetch(res)
-  dbClearResult(res)
+  ss <- fetchTable("recordings")
 
   for (i in 1:nrow(ss)) {
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
