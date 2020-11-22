@@ -10,6 +10,7 @@
 #' @param duration audio duration
 #' @param tmp Location to download temp file
 #' @param force If TRUE recalculates all values
+#' @param verbose If TRUE outputs debugging information
 #' @export
 #' @importFrom DBI dbConnect dbSendQuery dbFetch dbClearResult dbExecute dbGetRowCount
 #' @importFrom curl curl_download
@@ -18,13 +19,13 @@
 #' @importFrom rjson toJSON
 #' @importFrom sonicscrewdriver readAudio
 
-a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE) {
+a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-tdsc", source, id)
   }
 
   if (analysedRowCount(db, "analysis-tdsc", source, id) >= duration - 1) {
-    print("File already calculated -- skipping")
+    if (verbose) {print("File already calculated -- skipping");}
     return()
   }
   if (duration == 0) {

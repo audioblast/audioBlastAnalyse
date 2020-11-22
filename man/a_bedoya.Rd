@@ -4,7 +4,17 @@
 \alias{a_bedoya}
 \title{Rainfall}
 \usage{
-a_bedoya(db, source, id, file, type, duration, tmp, force = FALSE)
+a_bedoya(
+  db,
+  source,
+  id,
+  file,
+  type,
+  duration,
+  tmp,
+  force = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{db}{database connector}
@@ -22,6 +32,8 @@ a_bedoya(db, source, id, file, type, duration, tmp, force = FALSE)
 \item{tmp}{Location to download temp file}
 
 \item{force}{If TRUE recalculates all values}
+
+\item{verbose}{If TRUE outputs debugging information}
 }
 \description{
 Calculates rainfall using Bedoya's method

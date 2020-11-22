@@ -16,9 +16,9 @@ analyse <- function(db, force=FALSE, verbose=FALSE) {
     if (verbose) {print(ss[i, "file"]);}
     tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     if (verbose) {print("TDSC");}
-    a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
+    a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force, verbose)
     if (verbose) {print("bedoya");}
-    a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force)
+    a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], ss[[i, "Duration"]], tmp, force, verbose)
     unlink(tmp)
   }
 

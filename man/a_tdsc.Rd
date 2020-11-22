@@ -4,7 +4,17 @@
 \alias{a_tdsc}
 \title{Time domain signal coding}
 \usage{
-a_tdsc(db, source, id, file, type, duration, tmp, force = FALSE)
+a_tdsc(
+  db,
+  source,
+  id,
+  file,
+  type,
+  duration,
+  tmp,
+  force = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{db}{database connector}
@@ -22,6 +32,8 @@ a_tdsc(db, source, id, file, type, duration, tmp, force = FALSE)
 \item{tmp}{Location to download temp file}
 
 \item{force}{If TRUE recalculates all values}
+
+\item{verbose}{If TRUE outputs debugging information}
 }
 \description{
 Calculates TDSC every second
