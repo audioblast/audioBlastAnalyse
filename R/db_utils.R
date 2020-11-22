@@ -34,7 +34,7 @@ insertAnalysis <- function(db, table, source, id, duration, startTime, result){
 fetchTable <- function(db, table) {
   res <- dbSendQuery(
     db,
-    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`",table,"recordings`")
+    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`",table,"`")
     )
   ss <- dbFetch(res)
   dbClearResult(res)
