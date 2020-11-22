@@ -6,7 +6,7 @@
 #' @importFrom tools file_ext
 #' @export
 analyse <- function(db, force=FALSE, verbose=FALSE) {
-  ss <- fetchTable("recordings")
+  ss <- fetchTable(db, "recordings")
 
   for (i in 1:nrow(ss)) {
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
