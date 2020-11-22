@@ -4,12 +4,14 @@
 \alias{analyse}
 \title{Run all analyses}
 \usage{
-analyse(db, force = FALSE)
+analyse(db, force = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{db}{database connector}
 
 \item{force}{If TRUE recalculates all values}
+
+\item{verbose}{If TRUE outputs debugging information}
 }
 \description{
 Run all analyses
