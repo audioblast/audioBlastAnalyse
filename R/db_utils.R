@@ -31,10 +31,10 @@ insertAnalysis <- function(db, table, source, id, duration, startTime, result){
     dbExecute(db, sql)
 }
 
-fetchTable <- function(db, table) {
+fetchDownloadableRecordings <- function(db) {
   res <- dbSendQuery(
     db,
-    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`",table,"`")
+    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`recordings` WHERE `file` LIKE 'http%';")
     )
   ss <- dbFetch(res)
   dbClearResult(res)
