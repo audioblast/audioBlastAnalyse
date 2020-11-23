@@ -9,6 +9,8 @@ analyse(db, sense = "web", force = FALSE, verbose = FALSE)
 \arguments{
 \item{db}{database connector}
 
+\item{sense}{Allows "web" for the audioBlast! API to analyse, or a source for local analysis}
+
 \item{force}{If TRUE recalculates all values}
 
 \item{verbose}{If TRUE outputs debugging information}

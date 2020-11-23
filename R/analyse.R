@@ -1,6 +1,7 @@
 #' Run all analyses
 #'
 #' @param db database connector
+#' @param sense Allows "web" for the audioBlast! API to analyse, or a source for local analysis
 #' @param force If TRUE recalculates all values
 #' @param verbose If TRUE outputs debugging information
 #' @importFrom tools file_ext
