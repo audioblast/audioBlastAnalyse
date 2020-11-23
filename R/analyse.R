@@ -17,7 +17,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
   ss <- cbind(ss, rep_len(sense, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
   colnames(ss) <- c(cn, "sense", "verbose", "force", "base_dir")
 
-  cl <- makeCluster(cores, outfile="tmp.out")
+  cl <- makeCluster(cores, outfile="")
   clusterCall(cl, function() library(DBI))
   clusterCall(cl, function() library(RMariaDB))
   clusterExport(cl, "port")
