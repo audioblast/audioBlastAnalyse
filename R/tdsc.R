@@ -55,4 +55,5 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbo
         insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
     }
   }
+  return(0)
 }

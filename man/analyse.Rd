@@ -4,7 +4,14 @@
 \alias{analyse}
 \title{Run all analyses}
 \usage{
-analyse(db, sense = "web", base_dir = NULL, force = FALSE, verbose = FALSE)
+analyse(
+  db,
+  sense = "web",
+  base_dir = NULL,
+  force = FALSE,
+  verbose = FALSE,
+  cores = 1
+)
 }
 \arguments{
 \item{db}{database connector}
@@ -16,6 +23,8 @@ analyse(db, sense = "web", base_dir = NULL, force = FALSE, verbose = FALSE)
 \item{force}{If TRUE recalculates all values}
 
 \item{verbose}{If TRUE outputs debugging information}
+
+\item{cores}{Number of cores to use}
 }
 \description{
 Run all analyses
