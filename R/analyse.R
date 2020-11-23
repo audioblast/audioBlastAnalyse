@@ -30,7 +30,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
 }
 
 analyseFile <- function(inf){
-  if (inf["file"] == http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV) {next}
+  if (inf["file"] == http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV) {return(0)}
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
 
   if (as.character(inf["sense"]) == "web") {
