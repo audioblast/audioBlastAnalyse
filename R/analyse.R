@@ -17,12 +17,18 @@ analyse <- function(db, sense="web", force=FALSE, verbose=FALSE) {
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") next()
     if (verbose) {print(ss[i, "file"]);}
-    tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
+    if (sense == "web") {
+      tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
+    } else {
+      tmp <- paste0("/",ss[i, "file"])
+    }
     if (verbose) {print("TDSC");}
     a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
     if (verbose) {print("bedoya");}
     a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    unlink(tmp)
+    if (sense == "web") {
+        unlink(tmp)
+    }
   }
 
 }
