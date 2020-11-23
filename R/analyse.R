@@ -26,7 +26,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
   clusterExport(cl, "host")
   clusterExport(cl, "port")
   clusterExport(cl, "password")
-  parRapply(cl, ss[3000:7000,], analyseFile)
+  parRapply(cl, ss, analyseFile)
 }
 
 analyseFile <- function(inf){
