@@ -4,7 +4,7 @@
 \alias{analyse}
 \title{Run all analyses}
 \usage{
-analyse(db, force = FALSE, verbose = FALSE)
+analyse(db, sense = "web", force = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{db}{database connector}

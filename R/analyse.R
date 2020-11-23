@@ -5,8 +5,12 @@
 #' @param verbose If TRUE outputs debugging information
 #' @importFrom tools file_ext
 #' @export
-analyse <- function(db, force=FALSE, verbose=FALSE) {
-  ss <- fetchDownloadableRecordings(db)
+analyse <- function(db, sense="web", force=FALSE, verbose=FALSE) {
+  if (sense=="web") {
+    ss <- fetchDownloadableRecordings(db)
+  } else {
+    ss <-fetchRecordingsFromSource(db, sense)
+  }
 
   for (i in 1:nrow(ss)) {
     if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
