@@ -4,12 +4,14 @@
 \alias{analyse}
 \title{Run all analyses}
 \usage{
-analyse(db, sense = "web", force = FALSE, verbose = FALSE)
+analyse(db, sense = "web", base_dir = NULL, force = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{db}{database connector}
 
 \item{sense}{Allows "web" for the audioBlast! API to analyse, or a source for local analysis}
+
+\item{base_dir}{For local runs, the base directory}
 
 \item{force}{If TRUE recalculates all values}
 
