@@ -65,6 +65,14 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1077.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW4_0%2B1_20160709_030000.wav") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW4_0%2B1_20160709_030000.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/ECSPbis160109_inclenfrPocoya.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/50%20Track%2050.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/567_13_Poecilimon_jonicus_lobulatus_639r13.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_040000.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_020000.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2485.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160720_040000.wav") next()
+
       if (file_ext(ss[i, "file"]) == "MP3") next()
       if (file_ext(ss[i, "file"]) == "mp3") next()
 
