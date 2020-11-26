@@ -74,7 +74,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160720_040000.wav") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/Aeropus%20sibiricus%20sibiricus1.wav") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2420.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_230000.wav"
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_230000.wav") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2487.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2373.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2474.WAV") next()
