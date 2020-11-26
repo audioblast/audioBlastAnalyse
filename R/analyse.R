@@ -35,6 +35,14 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/429_12_Oecanthus_pellucens_533a.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2408.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/51%20Track%2051.wav") next()
+      if (ss[i, "file"] == "SM3OW3_0%2B1_20160718_010000.wav") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/IMG_0004.mp3") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2490.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/LS_50052.mp3") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/LS_50016.mp3") next()
+
       if (verbose) {print(ss[i, "file"]);}
       if (sense == "web") {
         tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
