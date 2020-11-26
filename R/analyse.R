@@ -1,11 +1,16 @@
 #' Run all analyses
 #'
 #' @param db database connector
+#' @param sense "web" for online files, or name of source to analyse locally
+#' @param verbose Gives verbose output if TRUE
+#' @param force Forces recalculation of analyses if TRUE
+#' @param base_dir Directory relative paths are located in
 #' @param cores Number of cores to use
+#' @param reverse Reverses the data frame of recordings to analyse
 #' @importFrom tools file_ext
 #' @importFrom parallel makeCluster clusterCall clusterExport parRapply
 #' @export
-analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1) {
+analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1, reverse=FALSE) {
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (sense=="web") {
     ss <- fetchDownloadableRecordings(db)
@@ -17,22 +22,53 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
   ss <- cbind(ss, rep_len(sense, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
   colnames(ss) <- c(cn, "sense", "verbose", "force", "base_dir")
 
-  cl <- makeCluster(cores, outfile="")
-  clusterCall(cl, function() library(DBI))
-  clusterCall(cl, function() library(RMariaDB))
-  clusterExport(cl, "port")
-  clusterExport(cl, "dbuser")
-  clusterExport(cl, "dbname")
-  clusterExport(cl, "host")
-  clusterExport(cl, "port")
-  clusterExport(cl, "password")
-  parRapply(cl, ss, analyseFile)
+  if (reverse) {
+    ss <- ss[order(nrow(ss):1),]
+  }
+
+  if (cores == 1) {
+    for (i in 1:nrow(ss)) {
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/429_12_Oecanthus_pellucens_533a.wav") next()
+      if (verbose) {print(ss[i, "file"]);}
+      if (sense == "web") {
+        tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
+      } else {
+        tmp <- paste0(base_dir,ss[i, "file"])
+      }
+      if (verbose) {print("TDSC");}
+      a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      if (verbose) {print("bedoya");}
+      a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      if (sense == "web") {
+        unlink(tmp)
+      }
+    }
+  } else {
+    cl <- makeCluster(cores, outfile="")
+    clusterCall(cl, function() library(DBI))
+    clusterCall(cl, function() library(RMariaDB))
+    clusterExport(cl, "port")
+    clusterExport(cl, "dbuser")
+    clusterExport(cl, "dbname")
+    clusterExport(cl, "host")
+    clusterExport(cl, "port")
+    clusterExport(cl, "password")
+    parRapply(cl, ss, analyseFileCluster)
+  }
 }
 
-analyseFile <- function(inf){
+#' Analyse an individual file
+#'
+#' @param inf Information passed to the function
+#' @importFrom DBI dbConnect dbDisconnect
+#' @importFrom RMariaDB MariaDB
+#' @export
+analyseFileCluster <- function(inf){
   if (inf["file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") {return(0)}
   if (inf["file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") {return(0)}
-  db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
+  db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
 
   if (as.character(inf["sense"]) == "web") {
     tmp <- paste0(tempfile(),".",file_ext(inf["file"]))
@@ -47,6 +83,6 @@ analyseFile <- function(inf){
     unlink(tmp)
   }
 
-  DBI::dbDisconnect(db)
+  dbDisconnect(db)
   return(0)
 }

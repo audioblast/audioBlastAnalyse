@@ -7,24 +7,27 @@
 analyse(
   db,
   sense = "web",
-  base_dir = NULL,
-  force = FALSE,
   verbose = FALSE,
-  cores = 1
+  force = FALSE,
+  base_dir = "",
+  cores = 1,
+  reverse = FALSE
 )
 }
 \arguments{
 \item{db}{database connector}
 
-\item{sense}{Allows "web" for the audioBlast! API to analyse, or a source for local analysis}
+\item{sense}{"web" for online files, or name of source to analyse locally}
 
-\item{base_dir}{For local runs, the base directory}
+\item{verbose}{Gives verbose output if TRUE}
 
-\item{force}{If TRUE recalculates all values}
+\item{force}{Forces recalculation of analyses if TRUE}
 
-\item{verbose}{If TRUE outputs debugging information}
+\item{base_dir}{Directory relative paths are located in}
 
 \item{cores}{Number of cores to use}
+
+\item{reverse}{Reverses the data frame of recordings to analyse}
 }
 \description{
 Run all analyses
