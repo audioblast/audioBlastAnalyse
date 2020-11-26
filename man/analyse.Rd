@@ -11,7 +11,8 @@ analyse(
   force = FALSE,
   base_dir = "",
   cores = 1,
-  reverse = FALSE
+  reverse = FALSE,
+  shuffle = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ analyse(
 \item{cores}{Number of cores to use}
 
 \item{reverse}{Reverses the data frame of recordings to analyse}
+
+\item{shuffle}{Shuffles rows before analysing}
 }
 \description{
 Run all analyses

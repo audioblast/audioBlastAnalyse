@@ -7,10 +7,11 @@
 #' @param base_dir Directory relative paths are located in
 #' @param cores Number of cores to use
 #' @param reverse Reverses the data frame of recordings to analyse
+#' @param shuffle Shuffles rows before analysing
 #' @importFrom tools file_ext
 #' @importFrom parallel makeCluster clusterCall clusterExport parRapply
 #' @export
-analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1, reverse=FALSE) {
+analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1, reverse=FALSE, shuffle=FALSE) {
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (sense=="web") {
     ss <- fetchDownloadableRecordings(db)
@@ -24,6 +25,9 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
 
   if (reverse) {
     ss <- ss[order(nrow(ss):1),]
+  }
+  if (shuffle) {
+    ss <- ss[sample(nrow(ss)),]
   }
 
   if (cores == 1) {
