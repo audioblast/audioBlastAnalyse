@@ -40,6 +40,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/IMG_0004.mp3") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2490.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1120.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2486.WAV") next()
       if (file_ext(ss[i, "file"]) == "MP3") next()
       if (file_ext(ss[i, "file"]) == "mp3") next()
 
