@@ -54,6 +54,9 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1343.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1226.WAV") next()
       if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1058.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/Whiffin-2.ogg") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2452.WAV") next()
+      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1058.WAV") next()
       if (file_ext(ss[i, "file"]) == "MP3") next()
       if (file_ext(ss[i, "file"]) == "mp3") next()
 
