@@ -52,7 +52,9 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbo
           next()
         }
         v <- tdsc(w, max_D=14)
-        insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
+        if (!is.null(v)) {
+          insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
+        }
     }
   }
   return(0)

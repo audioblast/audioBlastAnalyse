@@ -8,10 +8,11 @@
 #' @param cores Number of cores to use
 #' @param reverse Reverses the data frame of recordings to analyse
 #' @param shuffle Shuffles rows before analysing
+#' @param checkFile Provide a filename to check for debugging purposes
 #' @importFrom tools file_ext
 #' @importFrom parallel makeCluster clusterCall clusterExport parRapply
 #' @export
-analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1, reverse=FALSE, shuffle=FALSE) {
+analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", cores=1, reverse=FALSE, shuffle=FALSE, checkFile=NULL) {
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (sense=="web") {
     ss <- fetchDownloadableRecordings(db)
@@ -32,55 +33,11 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
 
   if (cores == 1) {
     for (i in 1:nrow(ss)) {
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1812_22g.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/MASAPO19910526_1121.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/429_12_Oecanthus_pellucens_533a.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2408.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/51%20Track%2051.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/IMG_0004.mp3") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2490.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1120.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2486.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2418.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2572.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2634.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1030.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160720_050000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/593_19_Mecopoda_%E2%80%9CS%E2%80%9D_833r1.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/ep_trunc.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160719_010000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/567_2_Poecilimon_artedentatus_639r2.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2459.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1343.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1226.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1058.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/Whiffin-2.ogg") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2452.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2459.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1058.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2390.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2475.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1040.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1053.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/1077.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW4_0%2B1_20160709_030000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW4_0%2B1_20160709_030000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/ECSPbis160109_inclenfrPocoya.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/50%20Track%2050.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/567_13_Poecilimon_jonicus_lobulatus_639r13.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_040000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_020000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2485.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160720_040000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/Aeropus%20sibiricus%20sibiricus1.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2420.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/SM3OW3_0%2B1_20160718_230000.wav") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2487.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2373.WAV") next()
-      if (ss[i, "file"] == "http://bio.acousti.ca/sites/default/files/2474.WAV") next()
+      if (!is.null(checkFile) && ss[i, "file"] != checkFile) {next()}
 
       if (file_ext(ss[i, "file"]) == "MP3") next()
       if (file_ext(ss[i, "file"]) == "mp3") next()
+      if (file_ext(ss[i, "file"]) == "ogg") next()
 
 
       if (verbose) {print(ss[i, "file"]);}
@@ -90,9 +47,13 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
         tmp <- paste0(base_dir,ss[i, "file"])
       }
       if (verbose) {print("TDSC");}
-      a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      tryCatch({
+        a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
       if (verbose) {print("bedoya");}
-      a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      tryCatch({
+        a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
       if (sense == "web") {
         unlink(tmp)
       }
@@ -128,8 +89,8 @@ analyseFileCluster <- function(inf){
     tmp <- paste0(inf["base_dir"],inf["file"])
   }
 
-  a_tdsc(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
   a_bedoya(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
+  a_tdsc(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
 
   if (inf["sense"] =="web") {
     unlink(tmp)

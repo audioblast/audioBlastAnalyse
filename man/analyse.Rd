@@ -12,7 +12,8 @@ analyse(
   base_dir = "",
   cores = 1,
   reverse = FALSE,
-  shuffle = FALSE
+  shuffle = FALSE,
+  checkFile = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ analyse(
 \item{reverse}{Reverses the data frame of recordings to analyse}
 
 \item{shuffle}{Shuffles rows before analysing}
+
+\item{checkFile}{Provide a filename to check for debugging purposes}
 }
 \description{
 Run all analyses
