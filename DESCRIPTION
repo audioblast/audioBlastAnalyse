@@ -10,7 +10,17 @@ Description: Runs any R based analysis for audioBLAST!
 License: GPL-3
 Encoding: UTF-8
 Language: en-GB
-Imports: DBI, RMariaDB, seewave, tdsc, curl, tuneR, rjson, sonicscrewdriver, parallel
+Imports: 
+    DBI, 
+    RMariaDB, 
+    seewave, 
+    tdsc, 
+    curl, 
+    tuneR, 
+    rjson, 
+    sonicscrewdriver, 
+    parallel,
+    soundecology
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1

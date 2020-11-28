@@ -54,6 +54,10 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       tryCatch({
         a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
       })
+      if (verbose) {print("bioacoustic index");}
+      tryCatch({
+        a_bi(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
       if (sense == "web") {
         unlink(tmp)
       }
@@ -91,6 +95,7 @@ analyseFileCluster <- function(inf){
 
   a_bedoya(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
   a_tdsc(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
+  a_bi(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
 
   if (inf["sense"] =="web") {
     unlink(tmp)
