@@ -55,7 +55,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbo
         if (!is.null(v)) {
           insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, toJSON(v@a_matrix))
         } else {
-          insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, NULL))
+          insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, NULL)
         }
     }
   }
