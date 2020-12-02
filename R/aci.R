@@ -54,7 +54,7 @@ a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbos
         insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, NULL)
         next()
       }
-      v <- ACI(wave)
+      v <- ACI(w)
       insertAnalysis(db, "analysis-aci", source, id, 30, (i-1)*30, v)
     }
   }
