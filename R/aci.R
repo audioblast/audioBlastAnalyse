@@ -15,8 +15,9 @@
 #' @importFrom DBI dbConnect dbSendQuery dbFetch dbClearResult dbExecute dbGetRowCount
 #' @importFrom curl curl_download
 #' @importFrom tuneR readWave
-#' @importFrom sonicscrewdriver rainfallDetection readAudio
+#' @importFrom sonicscrewdriver readAudio
 #' @importFrom rjson toJSON
+#' @importFrom seewave ACI
 
 a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   n <- floor(duration/30)
