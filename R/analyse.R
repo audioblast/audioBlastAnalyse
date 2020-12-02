@@ -63,6 +63,10 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       tryCatch({
         a_bi(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
       })
+      if (verbose) {print("ACI");}
+      tryCatch({
+        a_aci(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
       if (sense == "web") {
         unlink(tmp)
       }
