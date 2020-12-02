@@ -38,6 +38,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       if (file_ext(ss[i, "file"]) == "MP3") next()
       if (file_ext(ss[i, "file"]) == "mp3") next()
       if (file_ext(ss[i, "file"]) == "ogg") next()
+      if (file_ext(ss[i, "file"]) == "zc") next()
 
 
       if (verbose) {print(ss[i, "file"]);}
