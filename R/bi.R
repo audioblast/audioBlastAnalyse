@@ -24,7 +24,7 @@ a_bi <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose
     deleteAnalysis(db, "analysis-bi", source, id)
   }
 
-  if (analysedRowCount(db, "analysis-bi", source, id) >= n - 1) {
+  if (analysedRowCount(db, "analysis-bi", source, id) >= n) {
     if (verbose) {print("File already calculated -- skipping");}
     return()
   }
@@ -38,7 +38,7 @@ a_bi <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose
     if (rowAnalysed(db, "analysis-bi", source, id, (i-1)*30)) {
       #print("Skip existing result.")
     } else {
-
+      if (verbose) { print(paste("tdsc startTime:",(i-1)*30))}
       if (duration - (i-1)*30 < 0) return()
       dl_file(file, tmp)
       if (i == duration) {

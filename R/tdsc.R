@@ -37,7 +37,7 @@ a_tdsc <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbo
     if (rowAnalysed(db, "analysis-tdsc", source, id, (i-1))) {
       #print("Skip existing result.")
     } else {
-
+        if (verbose) { print(paste("tdsc startTime:",i-1))}
         if (duration - (i-1) < 0) return()
         dl_file(file, tmp)
         if (i == duration) {

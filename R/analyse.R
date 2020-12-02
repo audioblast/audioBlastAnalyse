@@ -46,6 +46,10 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
       } else {
         tmp <- paste0(base_dir,ss[i, "file"])
       }
+      if (verbose) {print("audiowaveform");}
+      tryCatch({
+        a_audiowaveform(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
       if (verbose) {print("TDSC");}
       tryCatch({
         a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
