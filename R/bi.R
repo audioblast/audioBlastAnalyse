@@ -24,7 +24,7 @@ a_bi <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose
     deleteAnalysis(db, "analysis-bi", source, id)
   }
 
-  if (analysedRowCount(db, "analysis-bi", source, id) == 2*n) {
+  if (analysedRowCount(db, "analysis-bi", source, id) == n) {
     if (verbose) {print("File already calculated -- skipping");}
     return()
   }

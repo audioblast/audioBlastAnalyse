@@ -17,7 +17,7 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
   if (is.null(duration)) {
     sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id='",id,"' AND startTime = ",startTime)
   } else {
-    sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id='",id,"' AND startTime = ",startTime,"' AND duration = ",duration)
+    sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id='",id,"' AND startTime = ",startTime," AND duration = ",duration)
   }
     res <- dbSendQuery(db, sql)
     dbFetch(res)

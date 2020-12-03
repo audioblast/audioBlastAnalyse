@@ -26,7 +26,7 @@ a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbos
     deleteAnalysis(db, "analysis-aci", source, id)
   }
 
-  if (analysedRowCount(db, "analysis-aci", source, id) == n) {
+  if (analysedRowCount(db, "analysis-aci", source, id) == n+duration) {
     if (verbose) {print("File already calculated -- skipping");}
     return()
   }
