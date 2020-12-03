@@ -19,13 +19,13 @@
 #' @importFrom rjson toJSON
 
 a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  n <- floor(duration/30)
+  n <- ceiling(duration/30)
 
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-bedoya", source, id)
   }
 
-  if (analysedRowCount(db, "analysis-bedoya", source, id) >= n) {
+  if (analysedRowCount(db, "analysis-bedoya", source, id) == n) {
     if (verbose) {print("File already calculated -- skipping");}
     return()
   }

@@ -105,6 +105,8 @@ analyseFileCluster <- function(inf){
   a_bedoya(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
   a_tdsc(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
   a_bi(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
+  a_aci(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
+  a_audiowaveform(db, inf["source"], inf["id"], inf["file"], inf["type"], as.numeric(inf["Duration"]), tmp, inf["force"], inf["verbose"])
 
   if (inf["sense"] =="web") {
     unlink(tmp)
