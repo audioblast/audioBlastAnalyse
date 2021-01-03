@@ -36,5 +36,5 @@ a_aci(
 \item{verbose}{If TRUE outputs debugging information}
 }
 \description{
-Calculates acoustic comlexity index
+Calculates acoustic complexity index
 }
