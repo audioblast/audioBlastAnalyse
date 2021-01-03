@@ -1,6 +1,6 @@
 #' ACI
 #'
-#' Calculates acoustic comlexity index
+#' Calculates acoustic complexity index
 #'
 #' @param db database connector
 #' @param source Source
