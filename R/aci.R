@@ -59,7 +59,7 @@ a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbos
     }
   }
 
-  for (i in (1:n)) {
+  for (i in (1:ceiling(duration))) {
     if (rowAnalysed(db, "analysis-aci", source, id, (i-1), 1)) {
       #print("Skip existing result.")
     } else {
