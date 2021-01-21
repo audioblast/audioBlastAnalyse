@@ -27,7 +27,7 @@ a_audiowaveform <- function(db, source, id, file, type, duration, tmp, force=FAL
 
   if (a == 0) {
     dl_file(file, tmp)
-    cmd <- paste0("audiowaveform -i ", tmp, " -o ",id,".png --width 300 --height 40 --no-axis-labels")
+    cmd <- paste0("audiowaveform -i \"", tmp, "\" -o ",id,".png --width 300 --height 40 --no-axis-labels")
     print(cmd)
     system(cmd)
     cmd <- paste0("scp ",id,".png unpssh@audioblast.org:/var/www/html/cdn.audioblast.org/files/audiowaveform/300_40/")
@@ -51,12 +51,12 @@ a_audiowaveform <- function(db, source, id, file, type, duration, tmp, force=FAL
   if (a == 0) {
     dl_file(file, tmp)
 
-    system(paste0("audiowaveform -i ",tmp," -o ", id, ".json  --pixels-per-second 20 --bits 8"))
+    system(paste0("audiowaveform -i \"",tmp,"\" -o ", id, ".json  --pixels-per-second 20 --bits 8"))
     r <- readChar(paste0(id,".json"), file.info(paste0(id,".json"))$size)
     sql <- paste0("INSERT INTO `audioblast`.`analysis-audiowaveform` VALUES ('",source,"','",id,"', 'json10pps8bit', '",r,"');")
     dbExecute(db, sql)
     print(sql)
-    unlink(paste0("data.json"))
+    unlink(paste0(id,".json"))
   }
 
   sql <- paste0("SELECT COUNT(*) FROM `audioblast`.`analysis-audiowaveform` WHERE `source` = '",source,"' AND id='",id,"' AND `type` = 'json200pps16bit'")
@@ -67,12 +67,12 @@ a_audiowaveform <- function(db, source, id, file, type, duration, tmp, force=FAL
   if (a == 0) {
     dl_file(file, tmp)
 
-    system(paste0("audiowaveform -i ",tmp," -o ",id,".json  --pixels-per-second 200 --bits 16"))
+    system(paste0("audiowaveform -i \"",tmp,"\" -o ",id,".json  --pixels-per-second 200 --bits 16"))
     r <- readChar(paste0(id,".json"), file.info(paste0(id,".json"))$size)
     sql <- paste0("INSERT INTO `audioblast`.`analysis-audiowaveform` VALUES ('",source,"','",id,"', 'json200pps16bit', '",r,"');")
     dbExecute(db, sql)
     print(sql)
-    unlink(paste0("data.json"))
+    unlink(paste0(id,".json"))
   }
 }
 
