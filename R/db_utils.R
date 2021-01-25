@@ -59,11 +59,7 @@ fetchSoundscapes <- function(db) {
   sql <- "SELECT * FROM audioblast.soundscapes
 	          LEFT JOIN `soundscape-metadata`
             ON `soundscape-metadata`.`source` = `soundscapes`.`source`
-		        AND `soundscape-metadata`.`id` = `soundscapes`.`id`
-          WHERE `Time` != ''
-	          AND `Date` != ''
-            AND author != 'hjosullivan'
-            AND `phases` IS NULL;"
+		        AND `soundscape-metadata`.`id` = `soundscapes`.`id`;"
   res <- dbSendQuery(db, sql)
   ss <- dbFetch(res)
   dbClearResult(res)
