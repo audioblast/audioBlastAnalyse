@@ -37,48 +37,25 @@ a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbos
 
 
   for (i in (1:n)) {
-    if (rowAnalysed(db, "analysis-aci", source, id, (i-1)*30, 30)) {
+    if (rowAnalysed(db, "analysis-aci", source, id, (i-1)*60, 60)) {
       #print("Skip existing result.")
     } else {
-      if (verbose) { print(paste("aci startTime:",(i-1)*30))}
-      if (duration - (i-1)*30 < 0) return()
+      if (verbose) { print(paste("aci startTime:",(i-1)*60))}
+      if (duration - (i-1)*60 < 0) return()
       dl_file(file, tmp)
       if (i == duration) {
-        w <- readAudio(tmp, from=(i-1)*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*60, units="seconds")
       } else {
-        w <- readAudio(tmp, from=(i-1)*30, to=i*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
       }
       if (length(w@left)==0) {
         #Where duration provided is longer than actual duration read insert a NULL
         #This prevents the file being unnecessarily downloaded and analysed again each time
-        insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, NULL)
+        insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, NULL)
         next()
       }
       v <- ACI(w)
-      insertAnalysis(db, "analysis-aci", source, id, 30, (i-1)*30, v)
-    }
-  }
-
-  for (i in (1:ceiling(duration))) {
-    if (rowAnalysed(db, "analysis-aci", source, id, (i-1), 1)) {
-      #print("Skip existing result.")
-    } else {
-      if (verbose) { print(paste("aci startTime:",(i-1)))}
-      if (duration - (i-1) < 0) return()
-      dl_file(file, tmp)
-      if (i == duration) {
-        w <- readAudio(tmp, from=(i-1), units="seconds")
-      } else {
-        w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
-      }
-      if (length(w@left)==0) {
-        #Where duration provided is longer than actual duration read insert a NULL
-        #This prevents the file being unnecessarily downloaded and analysed again each time
-        insertAnalysis(db, "analysis-bedoya", source, id, 1, (i-1), NULL)
-        next()
-      }
-      v <- ACI(w)
-      insertAnalysis(db, "analysis-aci", source, id, 1, (i-1), v)
+      insertAnalysis(db, "analysis-aci", source, id, 60, (i-1)*60, v)
     }
   }
 }

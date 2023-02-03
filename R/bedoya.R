@@ -19,7 +19,7 @@
 #' @importFrom rjson toJSON
 
 a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  n <- ceiling(duration/30)
+  n <- ceiling(duration/60)
 
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-bedoya", source, id)
@@ -36,25 +36,25 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE, ver
 
 
   for (i in (1:n)) {
-    if (rowAnalysed(db, "analysis-bedoya", source, id, (i-1)*30)) {
+    if (rowAnalysed(db, "analysis-bedoya", source, id, (i-1)*60)) {
       #print("Skip existing result.")
     } else {
-      if (verbose) { print(paste("tdsc startTime:",(i-1)*30))}
-      if (duration - (i-1)*30 < 0) return()
+      if (verbose) { print(paste("bedoya startTime:",(i-1)*60))}
+      if (duration - (i-1)*60 < 0) return()
       dl_file(file, tmp)
       if (i == duration) {
-        w <- readAudio(tmp, from=(i-1)*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*60, units="seconds")
       } else {
-        w <- readAudio(tmp, from=(i-1)*30, to=i*30, units="seconds")
+        w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
       }
       if (length(w@left)==0) {
         #Where duration provided is longer than actual duration read insert a NULL
         #This prevents the file being unnecessarily downloaded and analysed again each time
-        insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, NULL)
+        insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, NULL)
         next()
       }
       v <- rainfallDetection(w, method="bedoya2017")
-      insertAnalysis(db, "analysis-bedoya", source, id, 30, (i-1)*30, v)
+      insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, v)
     }
   }
 }
