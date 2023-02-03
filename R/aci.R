@@ -38,7 +38,7 @@ a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbos
 
   for (i in (1:n)) {
     if (rowAnalysed(db, "analysis-aci", source, id, (i-1)*60, 60)) {
-      #print("Skip existing result.")
+      print("Skip existing result.")
     } else {
       if (verbose) { print(paste("aci startTime:",(i-1)*60))}
       if (duration - (i-1)*60 < 0) return()

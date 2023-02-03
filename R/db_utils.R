@@ -33,6 +33,7 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
 
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
     sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",startTime,", '", result,"')")
+    print(sql)
     dbExecute(db, sql)
 }
 
