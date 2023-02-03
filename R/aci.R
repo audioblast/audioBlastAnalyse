@@ -20,13 +20,13 @@
 #' @importFrom seewave ACI
 
 a_aci <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  n <- ceiling(duration/30)
+  n <- ceiling(duration/60)
 
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-aci", source, id)
   }
 
-  if (analysedRowCount(db, "analysis-aci", source, id) == n+duration) {
+  if (analysedRowCount(db, "analysis-aci", source, id) == n) {
     if (verbose) {print("File already calculated -- skipping");}
     return()
   }
