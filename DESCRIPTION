@@ -18,12 +18,12 @@ Imports:
     curl, 
     tuneR, 
     rjson, 
-    sonicscrewdriver, 
-    parallel,
-    av
+    sonicscrewdriver
 LazyData: true
 Roxygen: list(markdown = TRUE)
 Suggests:
     spelling,
     testthat,
-    covr
+    covr,
+    av
+RoxygenNote: 7.2.3

@@ -34,7 +34,6 @@ a_bedoya <- function(db, source, id, file, type, duration, tmp, force=FALSE, ver
     return()
   }
 
-
   for (i in (1:n)) {
     if (rowAnalysed(db, "analysis-bedoya", source, id, (i-1)*60)) {
       #print("Skip existing result.")

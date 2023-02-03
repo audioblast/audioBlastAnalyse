@@ -10,7 +10,6 @@ analyse(
   verbose = FALSE,
   force = FALSE,
   base_dir = "",
-  cores = 1,
   reverse = FALSE,
   shuffle = FALSE,
   checkFile = NULL
@@ -26,8 +25,6 @@ analyse(
 \item{force}{Forces recalculation of analyses if TRUE}
 
 \item{base_dir}{Directory relative paths are located in}
-
-\item{cores}{Number of cores to use}
 
 \item{reverse}{Reverses the data frame of recordings to analyse}
 

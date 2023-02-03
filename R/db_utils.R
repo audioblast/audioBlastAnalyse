@@ -1,3 +1,4 @@
+#' @importFrom DBI dbExecute
 deleteAnalysis <- function(db, table, source, id){
     dbExecute(
       db,
@@ -19,15 +20,15 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
   } else {
     sql <- paste0("SELECT `source`, `id` FROM `",table,"` WHERE `source` = '",source,"' AND id='",id,"' AND startTime = ",startTime," AND duration = ",duration)
   }
-    res <- dbSendQuery(db, sql)
-    dbFetch(res)
-    rc <- dbGetRowCount(res)
-    dbClearResult(res)
-    if (rc != 0) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
+  res <- dbSendQuery(db, sql)
+  dbFetch(res)
+  rc <- dbGetRowCount(res)
+  dbClearResult(res)
+  if (rc != 0) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }
 
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
