@@ -19,10 +19,10 @@ Imports:
     tuneR, 
     rjson, 
     sonicscrewdriver, 
-    parallel
+    parallel,
+    av
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
 Suggests:
     spelling,
     testthat,

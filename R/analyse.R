@@ -35,8 +35,14 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", co
     for (i in 1:nrow(ss)) {
       if (!is.null(checkFile) && ss[i, "file"] != checkFile) {next()}
 
-      if (file_ext(ss[i, "file"]) == "MP3") next()
-      if (file_ext(ss[i, "file"]) == "mp3") next()
+      #if (file_ext(ss[i, "file"]) == "MP3") next()
+      #if (file_ext(ss[i, "file"]) == "mp3") next()
+
+      # ToDo: remove below
+      if (file_ext(ss[i, "file"]) == "wav") next()
+      if (file_ext(ss[i, "file"]) == "WAV") next()
+
+
       if (file_ext(ss[i, "file"]) == "ogg") next()
       if (file_ext(ss[i, "file"]) == "zc") next()
 
