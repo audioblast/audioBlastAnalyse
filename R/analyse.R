@@ -1,7 +1,7 @@
 #' Run all analyses
 #'
 #' @param db database connector
-#' @param sense "web" for online files, or name of source to analyse locally
+#' @param mode "web" for online files, or name of source to analyse locally
 #' @param verbose Gives verbose output if TRUE
 #' @param force Forces recalculation of analyses if TRUE
 #' @param base_dir Directory relative paths are located in
@@ -10,17 +10,17 @@
 #' @param checkFile Provide a filename to check for debugging purposes
 #' @importFrom tools file_ext
 #' @export
-analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", reverse=FALSE, shuffle=FALSE, checkFile=NULL) {
+analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", reverse=FALSE, shuffle=FALSE, checkFile=NULL) {
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
-  if (sense=="web") {
+  if (mode=="web") {
     ss <- fetchDownloadableRecordings(db)
   } else {
-    ss <-fetchRecordingsFromSource(db, sense)
+    ss <-fetchRecordingsFromSource(db, mode)
   }
 
   cn <- colnames(ss)
-  ss <- cbind(ss, rep_len(sense, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
-  colnames(ss) <- c(cn, "sense", "verbose", "force", "base_dir")
+  ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
+  colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
 
   if (reverse) {
     ss <- ss[order(nrow(ss):1),]
@@ -37,7 +37,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", re
 
 
     if (verbose) {print(ss[i, "file"]);}
-    if (sense == "web") {
+    if (mode == "web") {
       tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     } else {
       tmp <- paste0(base_dir,ss[i, "file"])
@@ -54,7 +54,7 @@ analyse <- function(db, sense="web", verbose=FALSE, force=FALSE, base_dir="", re
     tryCatch({
       a_aci(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
     })
-    if (sense == "web") {
+    if (mode == "web") {
       unlink(tmp)
     }
   }

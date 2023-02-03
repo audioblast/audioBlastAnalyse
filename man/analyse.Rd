@@ -6,7 +6,7 @@
 \usage{
 analyse(
   db,
-  sense = "web",
+  mode = "web",
   verbose = FALSE,
   force = FALSE,
   base_dir = "",
@@ -18,7 +18,7 @@ analyse(
 \arguments{
 \item{db}{database connector}
 
-\item{sense}{"web" for online files, or name of source to analyse locally}
+\item{mode}{"web" for online files, or name of source to analyse locally}
 
 \item{verbose}{Gives verbose output if TRUE}
 
