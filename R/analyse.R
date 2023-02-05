@@ -46,13 +46,9 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     tryCatch({
       a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
     })
-    if (verbose) {print("bedoya");}
+    if (verbose) {print("Soundscapes by Minute");}
     tryCatch({
-      a_bedoya(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    })
-    if (verbose) {print("ACI");}
-    tryCatch({
-      a_aci(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
     })
     if (mode == "web") {
       unlink(tmp)
