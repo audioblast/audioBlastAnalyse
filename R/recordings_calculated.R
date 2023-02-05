@@ -1,0 +1,16 @@
+#' @importFrom cli hash_file_sha256
+#' @export
+recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
+  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
+  res <- dbSendQuery(db, sql)
+  dbFetch(res)
+  if (dbGetRowCount(res) == 1) {
+    print("Alredy calculated hash.")
+  } else {
+    dl_file(file, tmp)
+    hash <- hash_file_sha256(tmp)
+    print(paste("Hash is: ", hash))
+    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `hash`) VALUES('", source, "', '", id, "', '", hash, "') ON DUPLICATE KEY UPDATE `hash` = '", hash, "';")
+    dbExecute(db, sql)
+  }
+}
