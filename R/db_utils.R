@@ -31,9 +31,9 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
   }
 }
 
-insertAnalysis <- function(db, table, source, id, duration, channels, startTime, result){
-  for (c in channels) {
-    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channels, ", ", startTime,", '", result,"')")
+insertAnalysis <- function(db, table, source, id, duration, startTime, result){
+  for (channel in 1:length(result)) {
+    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channel, ", ", startTime,", '", result[channel],"')")
     print(sql)
     dbExecute(db, sql)
   }
