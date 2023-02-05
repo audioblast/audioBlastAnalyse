@@ -19,7 +19,7 @@
 #' @importFrom curl curl_download
 #' @importFrom sonicscrewdriver readAudio rainfallDetection allChannels channels_se
 #' @importFrom rjson toJSON
-#' @importFrom seewave ACI H sh meanspec
+#' @importFrom seewave ACI H sh meanspec M th soundscapespec NDSI
 #' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
@@ -86,6 +86,18 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (verbose) { print(paste("Spectral entropy startTime:",(i-1)*60))}
     v <- allChannels(w, function(w,channel,...){m <- meanspec(w, channel=channel, plot=FALSE); return(sh(m))}, channel.param = "channel")
     insertAnalysis(db, "analysis-sh", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Amplitude index startTime:",(i-1)*60))}
+    v <- allChannels(w, M, channel.param = "channel")
+    insertAnalysis(db, "analysis-M", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Temporal entropy startTime:",(i-1)*60))}
+    v <- allChannels(w, function(w,channel,...){e <- env(w, channel=channel, plot=FALSE); return(th(e))}, channel.param = "channel")
+    insertAnalysis(db, "analysis-th", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("NDSI startTime:",(i-1)*60))}
+    v <- allChannels(w, function(w,channel,...){m <- soundscapespec(w, channel=channel, plot=FALSE); return(NDSI(m))}, channel.param = "channel")
+    insertAnalysis(db, "analysis-ndsi", source, id, 60, (i-1)*60, v)
 
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
     dbExecute(db, sql)
