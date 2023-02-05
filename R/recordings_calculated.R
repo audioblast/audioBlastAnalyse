@@ -1,4 +1,5 @@
 #' @importFrom cli hash_file_sha256
+#' @importFrom seewave duration
 #' @export
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
