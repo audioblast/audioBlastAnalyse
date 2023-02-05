@@ -40,5 +40,6 @@ Analyses performed:
 \itemize{
 \item ACI
 \item Bedoya rainfall
+\item Bioacoustic index
 }
 }
