@@ -21,7 +21,7 @@
 #' @importFrom seewave ACI
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  sql = paste0("SELECT * FROM `recordings-calclated` WHERE `source`='", source, " AND `id`='", id, "' AND `soundscapes_minute` = 1")
+  sql = paste0("SELECT * FROM `recordings-calclated` WHERE `source`='", source, "' AND `id`='", id, "' AND `soundscapes_minute` = 1")
   res <- dbSendQuery(db, sql)
   dbFetch(res)
   if (dbGetRowCount(res) == 1) {
