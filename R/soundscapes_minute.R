@@ -61,7 +61,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     v <- allChannels(w, ACI)
     insertAnalysis(db, "analysis-aci", source, id, 60, (i-1)*60, v)
     if (verbose) { print(paste("Bedoya startTime:",(i-1)*60))}
-    v <- allChannels(w, rainfallDetection, method="bedoya2017")
+    v <- allChannels(w, rainfallDetection, method="bedoya2017", channel.param=NULL)
     insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, v)
 
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
