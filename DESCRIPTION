@@ -18,7 +18,8 @@ Imports:
     curl, 
     tuneR, 
     rjson, 
-    sonicscrewdriver
+    sonicscrewdriver,
+    soundecology
 LazyData: true
 Roxygen: list(markdown = TRUE)
 Suggests:
