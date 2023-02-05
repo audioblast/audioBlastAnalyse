@@ -16,7 +16,6 @@
 #' @export
 #' @importFrom DBI dbConnect dbSendQuery dbFetch dbClearResult dbExecute dbGetRowCount
 #' @importFrom curl curl_download
-#' @importFrom tuneR readWave
 #' @importFrom sonicscrewdriver readAudio rainfallDetection
 #' @importFrom rjson toJSON
 #' @importFrom seewave ACI
@@ -56,5 +55,8 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (verbose) { print(paste("Bedoya startTime:",(i-1)*60))}
     v <- rainfallDetection(w, method="bedoya2017")
     insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, v)
+
+    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
+    dbExecute(db, sql)
   }
 }
