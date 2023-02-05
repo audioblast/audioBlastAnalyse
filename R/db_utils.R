@@ -31,10 +31,12 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
   }
 }
 
-insertAnalysis <- function(db, table, source, id, duration, startTime, result){
-    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",startTime,", '", result,"')")
+insertAnalysis <- function(db, table, source, id, duration, channels, startTime, result){
+  for (c in channels) {
+    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channels, ", ", startTime,", '", result,"')")
     print(sql)
     dbExecute(db, sql)
+  }
 }
 
 fetchDownloadableRecordings <- function(db) {
