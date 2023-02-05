@@ -19,8 +19,8 @@
 #' @importFrom curl curl_download
 #' @importFrom sonicscrewdriver readAudio rainfallDetection allChannels channels_se
 #' @importFrom rjson toJSON
-#' @importFrom seewave ACI
-#' @importFrom soundecology bioacoustic_index
+#' @importFrom seewave ACI H sh meanspec
+#' @importFrom soundecology bioacoustic_index acoustic_diversity
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `soundscapes_minute` = 1")
@@ -70,6 +70,22 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (verbose) { print(paste("Bioacoustic index startTime:",(i-1)*60))}
     v <- allChannels(w, bioacoustic_index, channel.param=NULL, output.FUN="channels_se")
     insertAnalysis(db, "analysis-bi", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Acoustic diversity index startTime:",(i-1)*60))}
+    v <- allChannels(w, acoustic_diversity, channel.param = NULL, output.FUN = "channels_se")
+    insertAnalysis(db, "analysis-adi", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Acoustic entropy startTime:",(i-1)*60))}
+    v <- allChannels(w, H, channel.param = "channel")
+    insertAnalysis(db, "analysis-H", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Acoustic evenness startTime:",(i-1)*60))}
+    v <- allChannels(w, acoustic_evenness, channel.param = NULL, output.FUN = "channels_se")
+    insertAnalysis(db, "analysis-evenness", source, id, 60, (i-1)*60, v)
+
+    if (verbose) { print(paste("Spectral entropy startTime:",(i-1)*60))}
+    v <- allChannels(w, function(w,channel,...){m <- meanspec(w, channel=channel, plot=FALSE); return(sh(m))}, channel.param = "channel")
+    insertAnalysis(db, "analysis-sh", source, id, 60, (i-1)*60, v)
 
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
     dbExecute(db, sql)
