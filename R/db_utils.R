@@ -33,7 +33,7 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
 
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   for (channel in 1:length(result)) {
-    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channel, ", ", startTime,", '", result[channel],"')")
+    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channel, ", ", startTime,", '", result[channel],"') ON DUPLICATE KEY UPDATE `value` = '", result[channel], "';")
     print(sql)
     dbExecute(db, sql)
   }
