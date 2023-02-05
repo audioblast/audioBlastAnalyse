@@ -24,7 +24,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     dl_file(file, tmp)
     w <- readAudio(tmp)
     d <- duration(w)
-    print(paste("Duration is: ", hash))
+    print(paste("Duration is: ", duration))
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `duration`) VALUES('", source, "', '", id, "', '", duration, "') ON DUPLICATE KEY UPDATE `duration` = '", duration, "';")
     dbExecute(db, sql)
   }
