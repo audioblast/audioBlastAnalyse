@@ -58,7 +58,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     }
 
     if (verbose) { print(paste("aci startTime:",(i-1)*60))}
-    v <- allChannels(w, ACI)
+      v <- allChannels(w, ACI, channel.param="channel")
     insertAnalysis(db, "analysis-aci", source, id, 60, (i-1)*60, v)
     if (verbose) { print(paste("Bedoya startTime:",(i-1)*60))}
     v <- allChannels(w, rainfallDetection, method="bedoya2017", channel.param=NULL)
