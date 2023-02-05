@@ -20,7 +20,7 @@
 #' @importFrom sonicscrewdriver readAudio rainfallDetection allChannels channels_se
 #' @importFrom rjson toJSON
 #' @importFrom seewave ACI H sh meanspec
-#' @importFrom soundecology bioacoustic_index acoustic_diversity
+#' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `soundscapes_minute` = 1")
