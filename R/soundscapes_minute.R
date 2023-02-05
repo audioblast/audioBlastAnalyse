@@ -19,7 +19,7 @@
 #' @importFrom curl curl_download
 #' @importFrom sonicscrewdriver readAudio rainfallDetection allChannels channels_se
 #' @importFrom rjson toJSON
-#' @importFrom seewave ACI H sh meanspec M th soundscapespec NDSI
+#' @importFrom seewave ACI H sh meanspec M th soundscapespec NDSI env
 #' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
