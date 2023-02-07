@@ -7,7 +7,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   res <- dbSendQuery(db, sql)
   dbFetch(res)
   if (dbGetRowCount(res) == 1) {
-    print("Alredy calculated hash.")
+    print("Already calculated hash.")
   } else {
     dl_file(file, tmp)
     hash <- hash_file_sha256(tmp)
@@ -20,7 +20,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   res <- dbSendQuery(db, sql)
   dbFetch(res)
   if (dbGetRowCount(res) == 1) {
-    print("Alredy calculated duration.")
+    print("Already calculated duration.")
   } else {
     dl_file(file, tmp)
     w <- readAudio(tmp)
