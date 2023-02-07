@@ -67,9 +67,18 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
       dbExecute(db, sql)
     },
     warning=function(cond) {
-
+      sql <- paste0("INSERT INTO `errors` VALUES (",
+                    "'sm_readAudio', ",
+                    "'warning', ",
+                    dbQuoteString(db, source),", ",
+                    dbQuoteString(db, id),", ",
+                    dbQuoteString(db, toString(cond)),
+                    ");"
+      )
+      dbExecute(db, sql)
     }
     )
+    print(class(rA))
     if(inherits(rA, "error")) next
 
     if (length(w@left)==0) {
