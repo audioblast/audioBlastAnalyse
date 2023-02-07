@@ -14,6 +14,9 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (mode=="web") {
     ss <- fetchDownloadableRecordings(db)
+    for (i in 1:nrow(ss)) {
+      tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
+    }
   } else {
     #Soundscapes by minute
     ss <-fetchUnanalysedRecordings(db, mode, "todo-sm")
@@ -21,12 +24,13 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
     colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
     for (i in 1:nrow(ss)) {
+      tmp <- paste0(base_dir,ss[i, "file"])
       tryCatch({
         soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
       })
     }
   }
-
+  dbDisconnect(db)
   return();
 
   cn <- colnames(ss)
@@ -50,11 +54,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
 
 
     if (verbose) {print(ss[i, "file"]);}
-    if (mode == "web") {
-      tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
-    } else {
-      tmp <- paste0(base_dir,ss[i, "file"])
-    }
+
     print(paste("Temp is: ", tmp))
     if (verbose) {print("TDSC");}
     #tryCatch({
