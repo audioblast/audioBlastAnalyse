@@ -23,6 +23,7 @@
 #' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
+  print(tmp)
   n <- ceiling(duration/60)
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-aci", source, id)
@@ -35,8 +36,12 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   }
 
   for (i in (1:n)) {
+
     dl_file(file, tmp)
     duration <- av_media_info(tmp)$duration
+    print(paste("Duration:",duration))
+
+    if (duration < 60) return()
 
     if (duration - (i-1)*60 < 0) return()
 
