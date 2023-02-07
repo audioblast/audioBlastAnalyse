@@ -23,17 +23,7 @@
 #' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `soundscapes_minute` = 1")
-  res <- dbSendQuery(db, sql)
-  dbFetch(res)
-  if (dbGetRowCount(res) == 1) {
-    print("Alredy calculated soundscapes by minute.")
-    return()
-  }
-  dbClearResult(res)
-
   n <- ceiling(duration/60)
-
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-aci", source, id)
     deleteAnalysis(db, "analysis-bedoya", source, id)
@@ -48,38 +38,11 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (duration - (i-1)*60 < 0) return()
 
     dl_file(file, tmp)
-    rA <- tryCatch({
-      if (i == duration) {
+    if (i == duration) {
         w <- readAudio(tmp, from=(i-1)*60, units="seconds")
-      } else {
+    } else {
         w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
-      }
-    },
-    error=function(cond) {
-      sql <- paste0("INSERT INTO `errors` VALUES (",
-                    "'sm_readAudio', ",
-                    "'error', ",
-                    dbQuoteString(db, source),", ",
-                    dbQuoteString(db, id),", ",
-                    dbQuoteString(db, toString(cond)),
-                    ");"
-                    )
-      dbExecute(db, sql)
-    },
-    warning=function(cond) {
-      sql <- paste0("INSERT INTO `errors` VALUES (",
-                    "'sm_readAudio', ",
-                    "'warning', ",
-                    dbQuoteString(db, source),", ",
-                    dbQuoteString(db, id),", ",
-                    dbQuoteString(db, toString(cond)),
-                    ");"
-      )
-      dbExecute(db, sql)
     }
-    )
-    print(class(rA))
-    if(inherits(rA, "error")) next
 
     if (length(w@left)==0) {
       #Where duration provided is longer than actual duration read insert a NULL
