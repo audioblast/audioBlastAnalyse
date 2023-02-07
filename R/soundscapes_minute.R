@@ -30,6 +30,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     print("Alredy calculated soundscapes by minute.")
     return()
   }
+  dbClearResult(res)
 
   n <- ceiling(duration/60)
 
