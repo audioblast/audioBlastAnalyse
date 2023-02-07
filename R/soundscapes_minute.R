@@ -46,8 +46,9 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
   for (i in (1:n)) {
     if (duration - (i-1)*60 < 0) return()
+
     dl_file(file, tmp)
-    tryCatch({
+    rA <- tryCatch({
       if (i == duration) {
         w <- readAudio(tmp, from=(i-1)*60, units="seconds")
       } else {
@@ -71,6 +72,8 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
     }
     )
+    if(inherits(rA, "error")) next
+
     if (length(w@left)==0) {
       #Where duration provided is longer than actual duration read insert a NULL
       #This prevents the file being unnecessarily downloaded and analysed again each time
