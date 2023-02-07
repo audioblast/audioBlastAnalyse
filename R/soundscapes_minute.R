@@ -60,7 +60,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
                     "'error', ",
                     dbQuoteString(db, source),", ",
                     dbQuoteString(db, id),", ",
-                    dbQuoteString(db, cond),
+                    dbQuoteString(db, toString(cond)),
                     ");"
                     )
       print(sql)
