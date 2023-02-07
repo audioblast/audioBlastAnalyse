@@ -8,6 +8,7 @@ deleteAnalysis <- function(db, table, source, id){
 
 analysedRowCount <- function(db, table, source, id){
     sql <- paste0("SELECT COUNT(*) FROM `", table, "` WHERE `source` = '",source,"' AND id='",id,"'")
+    print(sql)
     res <- dbSendQuery(db, sql)
     a <- dbFetch(res)[[1,1]]
     dbClearResult(res)
