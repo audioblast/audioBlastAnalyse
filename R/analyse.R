@@ -42,6 +42,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     } else {
       tmp <- paste0(base_dir,ss[i, "file"])
     }
+    print(paste("Temp is: ", tmp))
     if (verbose) {print("TDSC");}
     tryCatch({
       a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
