@@ -11,7 +11,6 @@
 #' @importFrom tools file_ext
 #' @export
 analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", reverse=FALSE, shuffle=FALSE, checkFile=NULL) {
-  db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (mode=="web") {
     ss <- fetchDownloadableRecordings(db)
   } else {
@@ -30,6 +29,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
   }
 
   for (i in 1:nrow(ss)) {
+    db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
     if (!is.null(checkFile) && ss[i, "file"] != checkFile) {next()}
 
     if (file_ext(ss[i, "file"]) == "ogg") next()
@@ -58,5 +58,6 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     if (mode == "web") {
       unlink(tmp)
     }
+    dbDisconnect(db)
   }
 }
