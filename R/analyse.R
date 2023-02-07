@@ -15,8 +15,19 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
   if (mode=="web") {
     ss <- fetchDownloadableRecordings(db)
   } else {
-    ss <-fetchRecordingsFromSource(db, mode)
+    #Soundscapes by minute
+    ss <-fetchUnanalysedRecordings(db, mode, "todo-sm")
+    cn <- colnames(ss)
+    ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
+    colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
+    for (i in 1:nrow(ss)) {
+      tryCatch({
+        soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
+    }
   }
+
+  return();
 
   cn <- colnames(ss)
   ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))

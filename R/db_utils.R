@@ -49,10 +49,10 @@ fetchDownloadableRecordings <- function(db) {
   return(ss)
 }
 
-fetchRecordingsFromSource <- function(db, sense) {
+fetchUnanalysedRecordings <- function(db, source, table) {
   res <- dbSendQuery(
     db,
-    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`recordings` WHERE `source` = '",sense,"';")
+    paste0("SELECT `source`, `id`, `file`, `type`, Duration FROM `audioblast`.`todo-sm` WHERE `source` = ",dbQuoteString(db, source),";")
   )
   ss <- dbFetch(res)
   dbClearResult(res)
