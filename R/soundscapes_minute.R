@@ -47,11 +47,30 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   for (i in (1:n)) {
     if (duration - (i-1)*60 < 0) return()
     dl_file(file, tmp)
-    if (i == duration) {
-      w <- readAudio(tmp, from=(i-1)*60, units="seconds")
-    } else {
-      w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
+    tryCatch({
+      if (i == duration) {
+        w <- readAudio(tmp, from=(i-1)*60, units="seconds")
+      } else {
+        w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
+      }
+    },
+    error=function(cond) {
+      sql <- paste0("INSERT INTO `errors` VALUES (",
+                    "'sm_readAudio', ",
+                    "'error', ",
+                    dbQuoteString(db, source),", ",
+                    dbQuoteString(db, id),", ",
+                    dbQuoteString(db, cond),
+                    ");"
+                    )
+      print(sql)
+      dbExecute(db, sql)
+      next()
+    },
+    warning=function(cond) {
+
     }
+    )
     if (length(w@left)==0) {
       #Where duration provided is longer than actual duration read insert a NULL
       #This prevents the file being unnecessarily downloaded and analysed again each time
