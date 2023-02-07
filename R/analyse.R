@@ -44,9 +44,9 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     }
     print(paste("Temp is: ", tmp))
     if (verbose) {print("TDSC");}
-    tryCatch({
-      a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    })
+    #tryCatch({
+    #  a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+    #})
     if (verbose) {print("Calculated propoerties of recordings");}
     tryCatch({
       recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
