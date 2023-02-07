@@ -11,6 +11,7 @@ License: GPL-3
 Encoding: UTF-8
 Language: en-GB
 Imports:
+    av,
     cli,
     DBI, 
     RMariaDB, 
@@ -26,6 +27,5 @@ Roxygen: list(markdown = TRUE)
 Suggests:
     spelling,
     testthat,
-    covr,
-    av
+    covr
 RoxygenNote: 7.2.3
