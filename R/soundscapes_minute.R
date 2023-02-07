@@ -121,5 +121,6 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
     dbExecute(db, sql)
+    sleep(0.1)
   }
 }
