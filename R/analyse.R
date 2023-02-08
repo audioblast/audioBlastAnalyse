@@ -6,9 +6,10 @@
 #' @param force Forces recalculation of analyses if TRUE
 #' @param base_dir Directory relative paths are located in
 #' @importFrom tools file_ext
+#' @importFrom DBI dbDisconnect dbConnect
 #' @export
 analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
-  db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
+  db <- dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (mode=="web") {
     #Todo: use todo-* queries
     ss <- fetchDownloadableRecordings(db)
@@ -49,7 +50,6 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
   dbDisconnect(db)
   for (i in 1:nrow(ss)) {
     db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
-    if (!is.null(checkFile) && ss[i, "file"] != checkFile) {next()}
 
     if (file_ext(ss[i, "file"]) == "ogg") next()
     if (file_ext(ss[i, "file"]) == "zc") next()

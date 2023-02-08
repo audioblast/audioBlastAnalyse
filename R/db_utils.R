@@ -1,4 +1,4 @@
-#' @importFrom DBI dbExecute
+#' @importFrom DBI dbExecute dbQuoteString
 deleteAnalysis <- function(db, table, source, id){
     dbExecute(
       db,
