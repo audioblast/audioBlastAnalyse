@@ -53,7 +53,7 @@ fetchUnanalysedRecordings <- function(db, source, table) {
   res <- dbSendQuery(
     db,
     paste0("SELECT `source`, `id`, `file`, `type`, Duration FROM `audioblast`.`",
-           dbQuoteIdentifier(table),
+           dbQuoteIdentifier(db, table),
            "` WHERE `source` = ",dbQuoteString(db, source),";")
   )
   ss <- dbFetch(res)
