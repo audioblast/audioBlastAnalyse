@@ -40,10 +40,12 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   if (dbGetRowCount(res) == 1) {
     print("Alredy calculated channels")
   } else {
-    dl_file(file, tmp)
-    channels <- av_media_info(tmp)$audio[['channels']]
-    print(paste("Channels: ", channels))
-    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `channels`) VALUES('", source, "', '", id, "', '", channels, "') ON DUPLICATE KEY UPDATE `channels` = '", channels, "';")
-    dbExecute(db, sql)
+    tryCatch({
+      dl_file(file, tmp)
+      channels <- av_media_info(tmp)$audio[['channels']]
+      print(paste("Channels: ", channels))
+      sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `channels`) VALUES('", source, "', '", id, "', '", channels, "') ON DUPLICATE KEY UPDATE `channels` = '", channels, "';")
+      dbExecute(db, sql)
+    })
   }
 }
