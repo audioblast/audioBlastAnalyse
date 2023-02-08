@@ -23,12 +23,14 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   if (dbGetRowCount(res) == 1) {
     print("Already calculated duration.")
   } else {
-    dl_file(file, tmp)
-    w <- readAudio(tmp)
-    d <- duration(w)
-    print(paste("Duration is: ", duration))
-    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `duration`) VALUES('", source, "', '", id, "', '", duration, "') ON DUPLICATE KEY UPDATE `duration` = '", duration, "';")
-    dbExecute(db, sql)
+    tryCatch({
+      dl_file(file, tmp)
+      w <- readAudio(tmp)
+      d <- duration(w)
+      print(paste("Duration is: ", duration))
+      sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `duration`) VALUES('", source, "', '", id, "', '", duration, "') ON DUPLICATE KEY UPDATE `duration` = '", duration, "';")
+      dbExecute(db, sql)
+    })
   }
 
 
