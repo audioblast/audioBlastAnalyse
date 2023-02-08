@@ -56,6 +56,7 @@ fetchUnanalysedRecordings <- function(db, source, table) {
            dbQuoteIdentifier(db, table),
            "` WHERE `source` = ",dbQuoteString(db, source),";")
   )
+  print(sql)
   ss <- dbFetch(res)
   dbClearResult(res)
   return(ss)
