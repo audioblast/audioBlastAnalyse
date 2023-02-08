@@ -1,4 +1,4 @@
-#' @importFrom DBI dbExecute dbQuoteString
+#' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier
 deleteAnalysis <- function(db, table, source, id){
     dbExecute(
       db,
@@ -52,7 +52,9 @@ fetchDownloadableRecordings <- function(db) {
 fetchUnanalysedRecordings <- function(db, source, table) {
   res <- dbSendQuery(
     db,
-    paste0("SELECT `source`, `id`, `file`, `type`, Duration FROM `audioblast`.`todo-sm` WHERE `source` = ",dbQuoteString(db, source),";")
+    paste0("SELECT `source`, `id`, `file`, `type`, Duration FROM `audioblast`.`",
+           dbQuoteIdentifier(table),
+           "` WHERE `source` = ",dbQuoteString(db, source),";")
   )
   ss <- dbFetch(res)
   dbClearResult(res)
