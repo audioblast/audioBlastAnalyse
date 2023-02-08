@@ -25,9 +25,12 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
     ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
     colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
     if (verbose) {print("Calculated properties of recordings");}
-    tryCatch({
-      recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    })
+    for (i in 1:nrow(ss)) {
+      tmp <- paste0(base_dir,ss[i, "file"])
+      tryCatch({
+        recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      })
+    }
 
     #Soundscapes by minute
     ss <-fetchUnanalysedRecordings(db, mode, "todo-sm")
