@@ -5,12 +5,9 @@
 #' @param verbose Gives verbose output if TRUE
 #' @param force Forces recalculation of analyses if TRUE
 #' @param base_dir Directory relative paths are located in
-#' @param reverse Reverses the data frame of recordings to analyse
-#' @param shuffle Shuffles rows before analysing
-#' @param checkFile Provide a filename to check for debugging purposes
 #' @importFrom tools file_ext
 #' @export
-analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", reverse=FALSE, shuffle=FALSE, checkFile=NULL) {
+analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
   db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (mode=="web") {
     #Todo: use todo-* queries
@@ -47,16 +44,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
   dbDisconnect(db)
   return();
 
-  cn <- colnames(ss)
-  ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
-  colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
-
-  if (reverse) {
-    ss <- ss[order(nrow(ss):1),]
-  }
-  if (shuffle) {
-    ss <- ss[sample(nrow(ss)),]
-  }
+  #Historic below - to be incorporated
 
   dbDisconnect(db)
   for (i in 1:nrow(ss)) {
@@ -69,16 +57,11 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="", rev
 
     if (verbose) {print(ss[i, "file"]);}
 
-    print(paste("Temp is: ", tmp))
     if (verbose) {print("TDSC");}
     #tryCatch({
     #  a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
     #})
 
-    if (verbose) {print("Soundscapes by Minute");}
-    tryCatch({
-      soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    })
     if (mode == "web") {
       unlink(tmp)
     }
