@@ -18,25 +18,16 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
     }
   } else {
     #Missing durations
-    ss <-fetchUnanalysedRecordings(db, source, "todo-hash_duration")
+    ss <-fetchUnanalysedRecordings(db, source)
     if (verbose) {print("Calculated properties of recordings");}
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
         tmp <- paste0(base_dir,ss[i, "file"])
-        tryCatch({
+        if (ss[i, "task"] == "recordings_calculated") {
           recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-        })
-      }
-    }
-
-    #Soundscapes by minute
-    ss <-fetchUnanalysedRecordings(db, source, "todo-sm")
-    if (nrow(ss)>0) {
-      for (i in 1:nrow(ss)) {
-        tmp <- paste0(base_dir,ss[i, "file"])
-        tryCatch({
+        } else if (ss[i, "task"] == "soundscapes_minute") {
           soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-        })
+        }
       }
     }
   }
