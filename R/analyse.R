@@ -8,7 +8,7 @@
 #' @importFrom tools file_ext
 #' @importFrom DBI dbDisconnect dbConnect
 #' @export
-analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
+analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, base_dir="") {
   db <- dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   if (mode=="web") {
     #Todo: use todo-* queries
@@ -18,10 +18,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
     }
   } else {
     #Missing durations
-    ss <-fetchUnanalysedRecordings(db, mode, "todo-hash_duration")
-    cn <- colnames(ss)
-    ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
-    colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
+    ss <-fetchUnanalysedRecordings(db, source, "todo-hash_duration")
     if (verbose) {print("Calculated properties of recordings");}
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
@@ -33,10 +30,7 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
     }
 
     #Soundscapes by minute
-    ss <-fetchUnanalysedRecordings(db, mode, "todo-sm")
-    cn <- colnames(ss)
-    ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
-    colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
+    ss <-fetchUnanalysedRecordings(db, source, "todo-sm")
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
         tmp <- paste0(base_dir,ss[i, "file"])
