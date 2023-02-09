@@ -17,7 +17,6 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
       tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     }
   } else {
-    #Missing durations
     ss <-fetchUnanalysedRecordings(db, source)
     if (verbose) {print("Calculated properties of recordings");}
     if (nrow(ss)>0) {

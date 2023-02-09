@@ -52,7 +52,7 @@ fetchDownloadableRecordings <- function(db) {
 fetchUnanalysedRecordings <- function(db, source) {
   sql <- paste0(
     paste0("SELECT * FROM `audioblast`.`todo`",
-           " WHERE `source` = ",dbQuoteString(db, source),";")
+           " WHERE `source` = ",dbQuoteString(db, source)," ORDER BY RAND();")
   )
   res <- dbSendQuery(db, sql)
   ss <- dbFetch(res)
