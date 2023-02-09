@@ -23,11 +23,13 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
     ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
     colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
     if (verbose) {print("Calculated properties of recordings");}
-    for (i in 1:nrow(ss)) {
-      tmp <- paste0(base_dir,ss[i, "file"])
-      tryCatch({
-        recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-      })
+    if (nrow(ss)>0) {
+      for (i in 1:nrow(ss)) {
+        tmp <- paste0(base_dir,ss[i, "file"])
+        tryCatch({
+          recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+        })
+      }
     }
 
     #Soundscapes by minute
@@ -35,11 +37,13 @@ analyse <- function(db, mode="web", verbose=FALSE, force=FALSE, base_dir="") {
     cn <- colnames(ss)
     ss <- cbind(ss, rep_len(mode, nrow(ss)), rep_len(verbose, nrow(ss)), rep_len(force, nrow(ss)), rep_len(base_dir, nrow(ss)))
     colnames(ss) <- c(cn, "mode", "verbose", "force", "base_dir")
-    for (i in 1:nrow(ss)) {
-      tmp <- paste0(base_dir,ss[i, "file"])
-      tryCatch({
-        soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-      })
+    if (nrow(ss)>0) {
+      for (i in 1:nrow(ss)) {
+        tmp <- paste0(base_dir,ss[i, "file"])
+        tryCatch({
+          soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+        })
+      }
     }
   }
   dbDisconnect(db)
