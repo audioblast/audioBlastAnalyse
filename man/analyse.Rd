@@ -4,7 +4,14 @@
 \alias{analyse}
 \title{Run all analyses}
 \usage{
-analyse(db, mode = "web", verbose = FALSE, force = FALSE, base_dir = "")
+analyse(
+  db,
+  mode = "local",
+  source = "unp",
+  verbose = FALSE,
+  force = FALSE,
+  base_dir = ""
+)
 }
 \arguments{
 \item{db}{database connector}

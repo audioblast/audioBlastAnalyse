@@ -1,4 +1,4 @@
-#' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier
+#' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier dbSendStatement
 deleteAnalysis <- function(db, table, source, id){
     dbExecute(
       db,
@@ -49,14 +49,17 @@ fetchDownloadableRecordings <- function(db) {
   return(ss)
 }
 
-fetchUnanalysedRecordings <- function(db, source) {
-  sql <- paste0(
-    paste0("SELECT * FROM `audioblast`.`todo`",
-           " WHERE `source` = ",dbQuoteString(db, source)," ORDER BY RAND();")
-  )
+fetchUnanalysedRecordings <- function(db, source, process_id) {
+  sql <- paste0("CALL `get-todo`(", dbQuoteString(db, process_id),", 10, ", dbQuoteString(db, source), ");")
+  print(sql)
+  dbSendStatement(db, sql)
+  sql <- paste0("SELECT * FROM `todo` ",
+                "INNER JOIN `todo-progress` ",
+                "  ON `todo`.`source`=`todo-progress`.`source` ",
+                "  AND `todo`.`id`=`todo-progress`.`id` ",
+                "WHERE `todo-progress`.`process` = ", dbQuoteString(db, process_id),";")
   res <- dbSendQuery(db, sql)
   ss <- dbFetch(res)
-  dbClearResult(res)
   return(ss)
 }
 

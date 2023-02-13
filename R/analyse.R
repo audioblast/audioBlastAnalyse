@@ -7,6 +7,7 @@
 #' @param base_dir Directory relative paths are located in
 #' @importFrom tools file_ext
 #' @importFrom DBI dbDisconnect dbConnect
+#' @importFrom cli hash_sha256
 #' @export
 analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, base_dir="") {
   db <- dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
@@ -17,19 +18,25 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
       tmp <- paste0(tempfile(),".",file_ext(ss[i, "file"]))
     }
   } else {
-    ss <-fetchUnanalysedRecordings(db, source)
-    if (verbose) {print("Calculated properties of recordings");}
-    if (nrow(ss)>0) {
-      for (i in 1:nrow(ss)) {
-        tmp <- paste0(base_dir,ss[i, "file"])
-        if (ss[i, "task"] == "recordings_calculated") {
-          recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-        } else if (ss[i, "task"] == "soundscapes_minute") {
-          soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+      while (TRUE) {
+        process_id <- hash_sha256(Sys.time())
+        ss <-fetchUnanalysedRecordings(db, source, process_id)
+        if (verbose) {print("Calculated properties of recordings");}
+        if (nrow(ss)>0) {
+          for (i in 1:nrow(ss)) {
+            tmp <- paste0(base_dir,ss[i, "file"])
+            if (ss[i, "task"] == "recordings_calculated") {
+              recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+            } else if (ss[i, "task"] == "soundscapes_minute") {
+              soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+            }
+          }
         }
-      }
+        sql <- paste("DELETE FROM `todo-progress` WHERE `process` = ", dbQuoteString(db, process_id), ";")
+        dbSendStatement(sql)
     }
   }
+
   dbDisconnect(db)
   return();
 
