@@ -39,7 +39,6 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
     dl_file(file, tmp)
     duration <- av_media_info(tmp)$duration
-    print(paste("Duration:",duration))
 
     if (duration < 60) return()
 
