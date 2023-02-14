@@ -68,11 +68,8 @@ deleteToDo <- function(db, source, id, task, process) {
                 dbQuoteString(db, process), ", ",
                 dbQuoteString(db, source), ", ",
                 dbQuoteString(db, id), ", ",
-                dbQuoteString(db, task), ";"
+                dbQuoteString(db, task), ");"
                 )
-  sql <- paste("DELETE FROM `todo-progress` WHERE `source` =", dbQuoteString(db, source),
-               " AND `id` = ", dbQuoteString(db, id),
-               " AND `task` = ", dbQuoteString(db, task), ";")
   dbExecute(db, sql)
 }
 
