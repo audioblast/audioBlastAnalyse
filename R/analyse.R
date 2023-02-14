@@ -29,7 +29,7 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
             } else if (ss[i, "task"] == "soundscapes_minute") {
               soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
             }
-            deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]])
+            deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
           }
 
         }
