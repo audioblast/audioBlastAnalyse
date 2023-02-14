@@ -21,7 +21,6 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
       while (TRUE) {
         process_id <- hash_sha256(Sys.time())
         ss <-fetchUnanalysedRecordings(db, source, process_id)
-        if (verbose) {print("Calculated properties of recordings");}
         if (nrow(ss)>0) {
           for (i in 1:nrow(ss)) {
             tmp <- paste0(base_dir,ss[i, "file"])
@@ -30,10 +29,11 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
             } else if (ss[i, "task"] == "soundscapes_minute") {
               soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
             }
+            deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]])
           }
+
         }
-        sql <- paste("DELETE FROM `todo-progress` WHERE `process` = ", dbQuoteString(db, process_id), ";")
-        dbSendStatement(sql)
+
     }
   }
 

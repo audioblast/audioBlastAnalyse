@@ -53,14 +53,18 @@ fetchUnanalysedRecordings <- function(db, source, process_id) {
   sql <- paste0("CALL `get-todo`(", dbQuoteString(db, process_id),", 10, ", dbQuoteString(db, source), ");")
   print(sql)
   dbSendStatement(db, sql)
-  sql <- paste0("SELECT * FROM `todo` ",
-                "INNER JOIN `todo-progress` ",
-                "  ON `todo`.`source`=`todo-progress`.`source` ",
-                "  AND `todo`.`id`=`todo-progress`.`id` ",
-                "WHERE `todo-progress`.`process` = ", dbQuoteString(db, process_id),";")
+  sql <- paste0("SELECT * FROM `todo-todo_progress` ",
+                "WHERE `process` = ", dbQuoteString(db, process_id),";")
   res <- dbSendQuery(db, sql)
   ss <- dbFetch(res)
   return(ss)
+}
+
+deleteToDo <- function(db, source, id, task) {
+  sql <- paste("DELETE FROM `todo-progress` WHERE `source` =", dbQuoteString(db, source),
+               " AND `id` = ", dbQuoteString(db, id),
+               " AND `task` = ", dbQuoteString(db, task), ";")
+  dbExecute(db, sql)
 }
 
 fetchSoundscapes <- function(db) {
