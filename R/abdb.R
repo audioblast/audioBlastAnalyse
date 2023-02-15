@@ -26,11 +26,11 @@ abdbGetQuery <- function(db, query) {
     error=function(cond) {
       return(FALSE)
     })
-    if (ret != FALSE) {
-      return(ret)
-    } else {
+    if (length(ret) == 1 && ret == FALSE) {
       print(paste(Sleep:", i"))
       Sys.sleep(i)
+    } else {
+      return(ret)
     }
   }
 }
