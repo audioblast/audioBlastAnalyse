@@ -29,6 +29,7 @@ abdbGetQuery <- function(db, query) {
     if (ret != FALSE) {
       return(ret)
     } else {
+      print(paste(Sleep:", i"))
       Sys.sleep(i)
     }
   }
