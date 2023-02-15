@@ -25,11 +25,14 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
           for (i in 1:nrow(ss)) {
             tmp <- paste0(base_dir,ss[i, "file"])
             if (ss[i, "task"] == "recordings_calculated") {
+              print("Recordings calculated")
               recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+              deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
             } else if (ss[i, "task"] == "soundscapes_minute") {
+              print("Soundscapes minutes")
               soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+              deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
             }
-            deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
           }
 
         }
