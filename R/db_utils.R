@@ -1,4 +1,4 @@
-#' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier dbSendStatement
+#' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier dbSendStatement dbGetQuery
 deleteAnalysis <- function(db, table, source, id){
     dbExecute(
       db,
@@ -54,9 +54,7 @@ fetchUnanalysedRecordings <- function(db, source, process_id) {
                 dbQuoteString(db, process_id),
                 ", 10, ",
                 dbQuoteString(db, source), ");")
-  res <- dbSendQuery(db, sql)
-  ss <- dbFetch(res)
-  dbClearResult(res)
+  ss <- dbGetQuery(db, sql)
   return(ss)
 }
 
