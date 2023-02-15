@@ -50,21 +50,18 @@ fetchDownloadableRecordings <- function(db) {
 }
 
 fetchUnanalysedRecordings <- function(db, source, process_id) {
-  sql <- paste0("CALL `get-todo`(",
+  sql <- paste0("CALL `get-tasks`(",
                 dbQuoteString(db, process_id),
                 ", 10, ",
                 dbQuoteString(db, source), ");")
-  print(sql)
-  dbSendStatement(db, sql)
-  sql <- paste0("SELECT * FROM `todo-todo_progress` ",
-                "WHERE `process` = ", dbQuoteString(db, process_id),";")
   res <- dbSendQuery(db, sql)
   ss <- dbFetch(res)
+  dbClearResult(res)
   return(ss)
 }
 
 deleteToDo <- function(db, source, id, task, process) {
-  sql <- paste0("CALL `delete-todo`(",
+  sql <- paste0("CALL `delete-task`(",
                 dbQuoteString(db, process), ", ",
                 dbQuoteString(db, source), ", ",
                 dbQuoteString(db, id), ", ",
