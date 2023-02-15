@@ -7,7 +7,9 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
   res <- dbSendQuery(db, sql)
   dbFetch(res)
-  if (dbGetRowCount(res) == 1) {
+  c <- dbGetRowCount(res)
+  dbClearResult(res)
+  if (c == 1) {
     print("Already calculated hash.")
   } else {
     dl_file(file, tmp)
@@ -17,10 +19,13 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     dbExecute(db, sql)
   }
 
+
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `duration` IS NOT NULL")
   res <- dbSendQuery(db, sql)
   dbFetch(res)
-  if (dbGetRowCount(res) == 1) {
+  c <- dbGetRowCount(res)
+  dbClearResult(res)
+  if (c == 1) {
     print("Already calculated duration.")
   } else {
     tryCatch({
@@ -33,18 +38,19 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     })
   }
 
-
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `channels` IS NOT NULL")
   res <- dbSendQuery(db, sql)
   dbFetch(res)
-  if (dbGetRowCount(res) == 1) {
+  c <- dbGetRowCount(res)
+  dbClearResult(res)
+  if (c == 1) {
     print("Alredy calculated channels")
   } else {
     tryCatch({
       dl_file(file, tmp)
-      channels <- tryCatch({return(av_media_info(tmp)$audio[['channels']])},error=function(cond){return(FALSE)});
+      channels <- av_media_info(tmp)$audio[['channels']]
+      print(paste("Channels: ", channels))
       if (channels != FALSE) {
-        print(paste("Channels: ", channels))
         sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `channels`) VALUES('", source, "', '", id, "', '", channels, "') ON DUPLICATE KEY UPDATE `channels` = '", channels, "';")
         dbExecute(db, sql)
       }
