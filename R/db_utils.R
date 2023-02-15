@@ -54,7 +54,7 @@ fetchUnanalysedRecordings <- function(db, source, process_id) {
                 dbQuoteString(db, process_id),
                 ", 10, ",
                 dbQuoteString(db, source), ");")
-  dbExecute(db, sql)
+  abdbExecute(db, sql)
   sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = ",
                 dbQuoteString(db, process_id), ";")
   ss <- dbGetQuery(db, sql)
