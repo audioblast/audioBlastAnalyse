@@ -5,7 +5,7 @@ backoff <- function() {
 abdbExecute <- function(db, query) {
   for (i in backoff()) {
     ret <- tryCatch({
-      return(dbExecute(db, query))
+      dbExecute(db, query)
     },
     error=function(cond) {
       return(FALSE)
@@ -21,7 +21,7 @@ abdbExecute <- function(db, query) {
 abdbGetQuery <- function(db, query) {
   for (i in backoff()) {
     ret <- tryCatch({
-      return(dbGetQuery(db, query))
+      dbGetQuery(db, query)
     },
     error=function(cond) {
       return(FALSE)
