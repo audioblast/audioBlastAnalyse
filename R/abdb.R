@@ -3,6 +3,7 @@ backoff <- function() {
 }
 
 abdbExecute <- function(db, query) {
+  print(query)
   for (i in backoff()) {
     ret <- tryCatch({
       dbExecute(db, query)
@@ -19,12 +20,13 @@ abdbExecute <- function(db, query) {
 }
 
 abdbGetQuery <- function(db, query) {
+  print(query)
   for (i in backoff()) {
     ret <- tryCatch({
       dbGetQuery(db, query)
     },
     error=function(cond) {
-      return(FALSE)
+      FALSE
     })
     if (length(ret) == 1 && ret == FALSE) {
       print(paste(Sleep:", i"))
