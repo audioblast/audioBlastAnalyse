@@ -16,7 +16,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     hash <- hash_file_sha256(tmp)
     print(paste("Hash is: ", hash))
     sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `hash`) VALUES('", source, "', '", id, "', '", hash, "') ON DUPLICATE KEY UPDATE `hash` = '", hash, "';")
-    dbExecute(db, sql)
+    abdbExecute(db, sql)
   }
 
 
@@ -34,7 +34,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
       d <- duration(w)
       print(paste("Duration is: ", duration))
       sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `duration`) VALUES('", source, "', '", id, "', '", duration, "') ON DUPLICATE KEY UPDATE `duration` = '", duration, "';")
-      dbExecute(db, sql)
+      abdbExecute(db, sql)
     })
   }
 
@@ -52,7 +52,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
       print(paste("Channels: ", channels))
       if (channels != FALSE) {
         sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `channels`) VALUES('", source, "', '", id, "', '", channels, "') ON DUPLICATE KEY UPDATE `channels` = '", channels, "';")
-        dbExecute(db, sql)
+        abdbExecute(db, sql)
       }
     })
   }
