@@ -5,7 +5,6 @@
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
-  print(sql)
   res <- dbSendQuery(db, sql)
   dbFetch(res)
   c <- dbGetRowCount(res)
