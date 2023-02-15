@@ -1,5 +1,5 @@
 backoff <- function() {
-  return(c(1,2,3,5,10,30,60))
+  return(c(1,1,2,3,5,10,30,60))
 }
 
 abdbExecute <- function(db, query) {
@@ -9,11 +9,12 @@ abdbExecute <- function(db, query) {
       dbExecute(db, query)
     },
     error=function(cond) {
-      return(FALSE)
+      FALSE
     })
     if (ret != FALSE) {
       return(ret)
     } else {
+      print(paste(Sleep:", i"))
       Sys.sleep(i)
     }
   }
