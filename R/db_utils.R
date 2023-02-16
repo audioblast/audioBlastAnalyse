@@ -55,11 +55,6 @@ fetchUnanalysedRecordings <- function(db, source, process_id) {
                 dbQuoteString(db, source), ");")
   ss <- abdbGetQuery(db, sql)
   return(ss)
-  sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = ",
-                dbQuoteString(db, process_id), ";")
-  paste(sql)
-  ss <- abdbGetQuery(db, sql)
-
 }
 
 deleteToDo <- function(db, source, id, task, process) {
