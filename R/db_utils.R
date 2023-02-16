@@ -68,7 +68,7 @@ deleteToDo <- function(db, source, id, task, process) {
                 dbQuoteString(db, id), ", ",
                 dbQuoteString(db, task), ");"
                 )
-  dbExecute(db, sql)
+  abdbExecute(db, sql)
 }
 
 fetchSoundscapes <- function(db) {
