@@ -6,12 +6,14 @@ abdbExecute <- function(db, query) {
   print(query)
   for (i in backoff()) {
     ret <- tryCatch({
-      dbExecute(db, query)
+      res <- dbSendQuery(db, query)
+      dbClearResult(res)
+      res
     },
     error=function(cond) {
       FALSE
     })
-    if (ret != FALSE) {
+    if (typeof(ret)=="S4" && class(ret) == "MariaDBResult") {
       return(ret)
     } else {
       print(paste("Sleep:", i))
