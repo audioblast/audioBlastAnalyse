@@ -14,7 +14,7 @@ abdbExecute <- function(db, query) {
     if (ret != FALSE) {
       return(ret)
     } else {
-      print(paste(Sleep:", i"))
+      print(paste("Sleep:", i))
       Sys.sleep(i)
     }
   }
@@ -30,7 +30,7 @@ abdbGetQuery <- function(db, query) {
       FALSE
     })
     if (length(ret) == 1 && ret == FALSE) {
-      print(paste(Sleep:", i"))
+      print(paste("Sleep:", i))
       Sys.sleep(i)
     } else {
       return(ret)
