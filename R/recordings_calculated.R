@@ -4,10 +4,10 @@
 #' @export
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
-  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
+  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`=", dbQuoteString(db, source),
+               " AND `id`=",dbQuoteString(db, id), ";")
   res <- abdbGetQuery(db, sql)
-  c <- nrow(res)
-  if (c == 1) {
+  if (!is.na(res[[1, "hash"]])) {
     print("Already calculated hash.")
   } else {
     dl_file(file, tmp)
@@ -17,11 +17,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     abdbExecute(db, sql)
   }
 
-
-  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `duration` IS NOT NULL")
-  res <- abdbGetQuery(db, sql)
-  c <- nrow(res)
-  if (c == 1) {
+  if (!is.na(res[[1, "duration"]])) {
     print("Already calculated duration.")
   } else {
     tryCatch({
@@ -34,10 +30,7 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     })
   }
 
-  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `channels` IS NOT NULL")
-  res <- abdbGetQuery(db, sql)
-  c <- nrow(res)
-  if (c == 1) {
+  if (!is.na(res[[1, "channels"]])) {
     print("Alredy calculated channels")
   } else {
     tryCatch({
