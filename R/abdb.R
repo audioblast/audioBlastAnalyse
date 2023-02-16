@@ -9,6 +9,8 @@ abdbExecute <- function(db, query) {
       dbExecute(db, query)
     },
     error=function(cond) {
+      print("Error:")
+      print(cond)
       -1
     })
     if (ret >= 0) {
@@ -29,6 +31,8 @@ abdbGetQuery <- function(db, query) {
       dbGetQuery(db, query)
     },
     error=function(cond) {
+      print("Error:")
+      print(cond)
       FALSE
     })
     if (length(ret) == 1 && ret == FALSE) {
