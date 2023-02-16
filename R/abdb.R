@@ -6,14 +6,13 @@ abdbExecute <- function(db, query) {
   print(query)
   for (i in backoff()) {
     ret <- tryCatch({
-      res <- dbExecute(db, query)
-      TRUE
+      dbExecute(db, query)
     },
     error=function(cond) {
-      FALSE
+      -1
     })
-    if (ret) {
-      return(ret)
+    if (ret >= 0) {
+      return()
     } else {
       print(paste("Sleep:", i))
       Sys.sleep(i)
