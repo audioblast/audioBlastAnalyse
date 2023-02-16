@@ -51,7 +51,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
     insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, v)
 
   }
-  sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_second`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
+  sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_second`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_second` = 1;")
   abdbExecute(db, sql)
 }
 
