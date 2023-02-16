@@ -13,7 +13,10 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     dl_file(file, tmp)
     hash <- hash_file_sha256(tmp)
     print(paste("Hash is: ", hash))
-    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `hash`) VALUES('", source, "', '", id, "', '", hash, "') ON DUPLICATE KEY UPDATE `hash` = '", hash, "';")
+    sql = paste0("UPDATE `recordings-calculated` SET `hash` = ",
+                 dbQuoteString(db, hash),
+                 "WHERE `source` = ", dbQuoteString(db, source),
+                 "AND `id` = ", dbQuoteString(db, id), ";")
     abdbExecute(db, sql)
   }
 
@@ -25,7 +28,10 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
       w <- readAudio(tmp)
       d <- duration(w)
       print(paste("Duration is: ", duration))
-      sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `duration`) VALUES('", source, "', '", id, "', '", duration, "') ON DUPLICATE KEY UPDATE `duration` = '", duration, "';")
+      sql = paste0("UPDATE `recordings-calculated` SET `duration` = ",
+                   duration,
+                   " WHERE `source` = ", dbQuoteString(db, source),
+                   "AND `id` = ", dbQuoteString(db, id), ";")
       abdbExecute(db, sql)
     })
   }
@@ -38,7 +44,10 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
       channels <- av_media_info(tmp)$audio[['channels']]
       print(paste("Channels: ", channels))
       if (channels != FALSE) {
-        sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `channels`) VALUES('", source, "', '", id, "', '", channels, "') ON DUPLICATE KEY UPDATE `channels` = '", channels, "';")
+        sql = paste0("UPDATE `recordings-calculated` SET `channels` = ",
+                     channels,
+                     " WHERE `source` = ", dbQuoteString(db, source),
+                     "AND `id` = ", dbQuoteString(db, id), ";")
         abdbExecute(db, sql)
       }
     })
