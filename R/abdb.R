@@ -18,7 +18,9 @@ abdbExecute <- function(db, query) {
     } else {
       print(paste("Sleep:", i))
       Sys.sleep(i)
+      next()
     }
+    stop("Too many retires of query")
   }
 }
 
