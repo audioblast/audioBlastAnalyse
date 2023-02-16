@@ -28,6 +28,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   if (force==TRUE) {
     deleteAnalysis(db, "analysis-aci", source, id)
     deleteAnalysis(db, "analysis-bedoya", source, id)
+    #ToDo: add other analyses
   }
 
   if (duration == 0) {
@@ -36,7 +37,6 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   }
 
   for (i in (1:n)) {
-
     dl_file(file, tmp)
     duration <- av_media_info(tmp)$duration
 
@@ -44,19 +44,10 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
     if (duration - (i-1)*60 < 0) return()
 
-
     if (i == duration) {
         w <- readAudio(tmp, from=(i-1)*60, units="seconds")
     } else {
         w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
-    }
-
-    if (length(w@left)==0) {
-      #Where duration provided is longer than actual duration read insert a NULL
-      #This prevents the file being unnecessarily downloaded and analysed again each time
-      insertAnalysis(db, "analysis-aci", source, id, 60, (i-1)*60, NULL)
-      insertAnalysis(db, "analysis-bedoya", source, id, 60, (i-1)*60, NULL)
-      next()
     }
 
     if (verbose) { print(paste("aci startTime:",(i-1)*60))}
@@ -98,8 +89,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (verbose) { print(paste("NDSI startTime:",(i-1)*60))}
     v <- allChannels(w, function(w,channel,...){m <- soundscapespec(w, channel=channel, plot=FALSE); return(NDSI(m))}, channel.param = "channel")
     insertAnalysis(db, "analysis-ndsi", source, id, 60, (i-1)*60, v)
-
-    sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
-    dbExecute(db, sql)
   }
+  sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
+  abdbExecute(db, sql)
 }
