@@ -5,10 +5,8 @@
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `hash` IS NOT NULL")
-  res <- dbSendQuery(db, sql)
-  dbFetch(res)
-  c <- dbGetRowCount(res)
-  dbClearResult(res)
+  res <- abdbGetQuery(db, sql)
+  c <- nrow(res)
   if (c == 1) {
     print("Already calculated hash.")
   } else {
@@ -21,10 +19,8 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
 
 
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `duration` IS NOT NULL")
-  res <- dbSendQuery(db, sql)
-  dbFetch(res)
-  c <- dbGetRowCount(res)
-  dbClearResult(res)
+  res <- abdbGetQuery(db, sql)
+  c <- nrow(res)
   if (c == 1) {
     print("Already calculated duration.")
   } else {
@@ -39,10 +35,8 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   }
 
   sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`='", source, "' AND `id`='", id, "' AND `channels` IS NOT NULL")
-  res <- dbSendQuery(db, sql)
-  dbFetch(res)
-  c <- dbGetRowCount(res)
-  dbClearResult(res)
+  res <- abdbGetQuery(db, sql)
+  c <- nrow(res)
   if (c == 1) {
     print("Alredy calculated channels")
   } else {
