@@ -4,7 +4,9 @@
 #' @export
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
-  sql = paste0("SELECT * FROM `recordings-calculated` WHERE `source`=", dbQuoteString(db, source),
+  sql = paste0("SELECT `source`, `id`, CAST(`hash` AS CHAR) as `hash`, ",
+               "`duration`, `channels`, `soundscapes_minute`, `soundscapes_second` ",
+               "FROM `recordings-calculated` WHERE `source`=", dbQuoteString(db, source),
                " AND `id`=",dbQuoteString(db, id), ";")
   res <- abdbGetQuery(db, sql)
   if (!is.na(res[[1, "hash"]])) {
