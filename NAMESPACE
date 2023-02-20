@@ -2,6 +2,7 @@
 
 export(a_audiowaveform)
 export(analyse)
+export(channels_tdsc)
 export(download)
 export(recordings_calculated)
 export(soundscapes_by_minute)
