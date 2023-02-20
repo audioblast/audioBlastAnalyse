@@ -2,6 +2,7 @@
 #'
 #' @param db database connector
 #' @param mode "web" for online files, or name of source to analyse locally
+#' @param source Specify source to analyse
 #' @param verbose Gives verbose output if TRUE
 #' @param force Forces recalculation of analyses if TRUE
 #' @param base_dir Directory relative paths are located in
@@ -43,30 +44,6 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
 
     }
   }
-
   dbDisconnect(db)
   return();
-
-  #Historic below - to be incorporated
-
-  dbDisconnect(db)
-  for (i in 1:nrow(ss)) {
-    db <- DBI::dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
-
-    if (file_ext(ss[i, "file"]) == "ogg") next()
-    if (file_ext(ss[i, "file"]) == "zc") next()
-
-
-    if (verbose) {print(ss[i, "file"]);}
-
-    if (verbose) {print("TDSC");}
-    #tryCatch({
-    #  a_tdsc(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-    #})
-
-    if (mode == "web") {
-      unlink(tmp)
-    }
-    dbDisconnect(db)
-  }
 }

@@ -60,7 +60,6 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   abdbExecute(db, sql)
 }
 
-#' @export
 channels_tdsc <- function(...) {
   params = list(...)
   return(toJSON(params[[1]]@a_matrix))

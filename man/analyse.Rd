@@ -18,6 +18,8 @@ analyse(
 
 \item{mode}{"web" for online files, or name of source to analyse locally}
 
+\item{source}{Specify source to analyse}
+
 \item{verbose}{Gives verbose output if TRUE}
 
 \item{force}{Forces recalculation of analyses if TRUE}
