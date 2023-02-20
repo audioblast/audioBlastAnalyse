@@ -38,13 +38,11 @@ insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   }
 }
 
-fetchDownloadableRecordings <- function(db) {
-  res <- dbSendQuery(
-    db,
-    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`recordings` WHERE `file` LIKE 'http%';")
-    )
-  ss <- dbFetch(res)
-  dbClearResult(res)
+fetchDownloadableRecordings <- function(db, source, process_id) {
+  sql <- paste0("CALL `get-tasks-by-file`(",
+                dbQuoteString(db, process_id), ",",
+                dbQuoteString(db, source), ");")
+  ss <- abdbGetQuery(db, sql)
   return(ss)
 }
 
