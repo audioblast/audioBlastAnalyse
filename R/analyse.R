@@ -42,6 +42,9 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
           soundscapes_by_second(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "file"]], ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
         }
+        if (mode="web") {
+          unlink(tmp)
+        }
       }
     }
   }
