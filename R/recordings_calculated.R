@@ -15,7 +15,6 @@
 #' @importFrom av av_media_info
 #' @export
 recordings_calculated <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  print(tmp)
   sql = paste0("SELECT * FROM `v-recordings-calculated` ",
                "WHERE `source`=", dbQuoteString(db, source),
                " AND `id`=",dbQuoteString(db, id), ";")
@@ -23,7 +22,6 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   if (!is.na(res[[1, "hash"]])) {
     print("Already calculated hash.")
   } else {
-    dl_file(file, tmp)
     hash <- hash_file_sha256(tmp)
     print(paste("Hash is: ", hash))
     sql = paste0("UPDATE `recordings-calculated` SET `hash` = ",
@@ -37,7 +35,6 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
     print("Already calculated duration.")
   } else {
     tryCatch({
-      dl_file(file, tmp)
       w <- readAudio(tmp)
       d <- duration(w)
       print(paste("Duration is: ", duration))
@@ -52,7 +49,6 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   if (!is.na(res[[1, "channels"]])) {
     print("Alredy calculated channels")
   } else {
-    dl_file(file, tmp)
     channels <- av_media_info(tmp)$audio[['channels']]
     print(paste("Channels: ", channels))
     if (is.numeric(channels)) {
