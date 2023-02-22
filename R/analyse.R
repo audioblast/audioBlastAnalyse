@@ -24,7 +24,7 @@ analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, 
 
     # Download file if remote
     if (mode=="web") {
-      tmp <- paste0(tempfile(),file_ext(ss[1, "file"]))
+      tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
       dl_file(ss[1, "file"], tmp)
     }
 
