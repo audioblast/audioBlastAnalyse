@@ -1,3 +1,4 @@
+#' @importFrom utils download.file
 dl_file <- function(file, tmp=NULL) {
   if (file.exists(tmp)) return()
   if (is.null(tmp)) {

@@ -16,7 +16,7 @@ analyse(
 \arguments{
 \item{db}{database connector}
 
-\item{mode}{"web" for online files, or name of source to analyse locally}
+\item{mode}{"web" for online files, or "local"}
 
 \item{source}{Specify source to analyse}
 

@@ -9,9 +9,10 @@
 #' @importFrom tools file_ext
 #' @importFrom DBI dbDisconnect dbConnect
 #' @importFrom cli hash_sha256
+#' @importFrom RMariaDB MariaDB
 #' @export
 analyse <- function(db, mode="local", source="unp", verbose=FALSE, force=FALSE, base_dir="") {
-  db <- dbConnect(RMariaDB::MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
+  db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   process_id <- hash_sha256(Sys.time())
 
   while (TRUE) {
