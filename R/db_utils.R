@@ -38,6 +38,15 @@ insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   }
 }
 
+fetchRecordingDebug <- function(db, source, id) {
+  sql <- paste0("SELECT * FROM `recordings` WHERE `source`=",
+                dbQuoteString(db, source),
+                " AND `id` = ",
+                dbQuoteString(db,id), ";")
+  ss <- abdbGetQuery(db, sql)
+  return(ss)
+}
+
 fetchDownloadableRecordings <- function(db, source, process_id) {
   sql <- paste0("CALL `get-tasks-by-file`(",
                 dbQuoteString(db, process_id), ",",
