@@ -34,18 +34,24 @@ rowAnalysed <- function(db, table, source, id, startTime, duration=NULL){
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   for (channel in 1:length(result)) {
     sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channel, ", ", startTime,", '", result[channel],"') ON DUPLICATE KEY UPDATE `value` = '", result[channel], "';")
-    print(sql)
     abdbExecute(db, sql)
   }
 }
 
-fetchDownloadableRecordings <- function(db) {
-  res <- dbSendQuery(
-    db,
-    paste0("SELECT source, id, `file`, `type`, Duration FROM `audioblast`.`recordings` WHERE `file` LIKE 'http%';")
-    )
-  ss <- dbFetch(res)
-  dbClearResult(res)
+fetchRecordingDebug <- function(db, source, id) {
+  sql <- paste0("SELECT * FROM `recordings` WHERE `source`=",
+                dbQuoteString(db, source),
+                " AND `id` = ",
+                dbQuoteString(db,id), ";")
+  ss <- abdbGetQuery(db, sql)
+  return(ss)
+}
+
+fetchDownloadableRecordings <- function(db, source, process_id) {
+  sql <- paste0("CALL `get-tasks-by-file`(",
+                dbQuoteString(db, process_id), ",",
+                dbQuoteString(db, source), ");")
+  ss <- abdbGetQuery(db, sql)
   return(ss)
 }
 
@@ -54,10 +60,6 @@ fetchUnanalysedRecordings <- function(db, source, process_id) {
                 dbQuoteString(db, process_id),
                 ", 10, ",
                 dbQuoteString(db, source), ");")
-  abdbExecute(db, sql)
-  sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = ",
-                dbQuoteString(db, process_id), ";")
-  paste(sql)
   ss <- abdbGetQuery(db, sql)
   return(ss)
 }
@@ -69,7 +71,7 @@ deleteToDo <- function(db, source, id, task, process) {
                 dbQuoteString(db, id), ", ",
                 dbQuoteString(db, task), ");"
                 )
-  dbExecute(db, sql)
+  abdbExecute(db, sql)
 }
 
 fetchSoundscapes <- function(db) {

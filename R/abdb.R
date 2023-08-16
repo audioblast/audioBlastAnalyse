@@ -1,33 +1,42 @@
 backoff <- function() {
-  return(c(1,2,3,5,10,30,60))
+  return(c(1,1,2,3,5,10,30,60))
 }
 
 abdbExecute <- function(db, query) {
+  print(query)
   for (i in backoff()) {
     ret <- tryCatch({
       dbExecute(db, query)
     },
     error=function(cond) {
-      return(FALSE)
+      print("Error:")
+      print(cond)
+      -1
     })
-    if (ret != FALSE) {
-      return(ret)
+    if (ret >= 0) {
+      return()
     } else {
+      print(paste("Sleep:", i))
       Sys.sleep(i)
+      next()
     }
+    stop("Too many retires of query")
   }
 }
 
 abdbGetQuery <- function(db, query) {
+  print(query)
   for (i in backoff()) {
     ret <- tryCatch({
       dbGetQuery(db, query)
     },
     error=function(cond) {
-      return(FALSE)
+      print("Error:")
+      print(cond)
+      FALSE
     })
     if (length(ret) == 1 && ret == FALSE) {
-      print(paste(Sleep:", i"))
+      print(paste("Sleep:", i))
       Sys.sleep(i)
     } else {
       return(ret)

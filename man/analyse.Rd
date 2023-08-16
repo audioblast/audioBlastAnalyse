@@ -8,21 +8,33 @@ analyse(
   db,
   mode = "local",
   source = "unp",
+  debug = FALSE,
+  id = NULL,
   verbose = FALSE,
   force = FALSE,
-  base_dir = ""
+  base_dir = "",
+  sleep = NULL
 )
 }
 \arguments{
 \item{db}{database connector}
 
-\item{mode}{"web" for online files, or name of source to analyse locally}
+\item{mode}{"web" for online files, or "local" for local files}
+
+\item{source}{Specify source to analyse}
+
+\item{debug}{If TRUE and used with id then allows for debugging a single recording}
+
+\item{id}{Specify id of a file within source to analyse (only used with debug=T)}
 
 \item{verbose}{Gives verbose output if TRUE}
 
 \item{force}{Forces recalculation of analyses if TRUE}
 
 \item{base_dir}{Directory relative paths are located in}
+
+\item{sleep}{Number of seconds to sleep after all jobs are complete before
+requesting additional work from the database. Default (NULL) cancels the task.}
 }
 \description{
 Run all analyses
