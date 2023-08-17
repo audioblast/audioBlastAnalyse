@@ -2,6 +2,7 @@
 #'
 #' @param db database connector
 #' @param mode "web" for online files, or "local" for local files
+#' @param wait FALSE to terminate when no jobs are retrieved.
 #' @param source Specify source to analyse
 #' @param debug If TRUE and used with id and task then allows for debugging a single recording
 #' @param id Specify id of a file within source to analyse (only used with debug=T)
@@ -19,6 +20,7 @@
 analyse <- function(
     db,
     mode="local",
+    wait=FALSE,
     source="unp",
     debug=FALSE,
     id=NULL,
@@ -44,6 +46,10 @@ analyse <- function(
         ss <- fetchRecordingDebug(db, source, id)
       } else {
         ss <-fetchUnanalysedRecordings(db, source, process_id)
+        if (nrow(ss) == 0) {
+          if (wait == FALSE) { cont <- FALSE;}
+          else { Sys.sleep(10)}
+        }
       }
     }
     if (mode=="web") {

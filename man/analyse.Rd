@@ -7,9 +7,11 @@
 analyse(
   db,
   mode = "local",
+  wait = FALSE,
   source = "unp",
   debug = FALSE,
   id = NULL,
+  task = NULL,
   verbose = FALSE,
   force = FALSE,
   base_dir = "",
@@ -21,11 +23,15 @@ analyse(
 
 \item{mode}{"web" for online files, or "local" for local files}
 
+\item{wait}{FALSE to terminate when no jobs are retrieved.}
+
 \item{source}{Specify source to analyse}
 
-\item{debug}{If TRUE and used with id then allows for debugging a single recording}
+\item{debug}{If TRUE and used with id and task then allows for debugging a single recording}
 
 \item{id}{Specify id of a file within source to analyse (only used with debug=T)}
+
+\item{task}{Specify a task (for use when debug=T)}
 
 \item{verbose}{Gives verbose output if TRUE}
 
