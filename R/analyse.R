@@ -50,6 +50,8 @@ analyse <- function(
           if (wait == FALSE) { cont <- FALSE;}
           else { Sys.sleep(10)}
         }
+        dbDisconnect(db)
+        db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
       }
     }
     if (mode=="web") {
