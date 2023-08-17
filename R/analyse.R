@@ -29,7 +29,7 @@ analyse <- function(
     sleep = NULL
     ) {
   db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
-  process_id <- hash_sha256(Sys.time())
+  process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
 
   cont <- TRUE
   while (cont) {
