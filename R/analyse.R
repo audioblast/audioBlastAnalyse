@@ -1,6 +1,7 @@
 #' Run all analyses
 #'
 #' @param db database connector
+#' @param db_legacy If TRUE allows use with RMariaDB connectors that have issues with stored procedures
 #' @param mode "web" for online files, or "local" for local files
 #' @param wait FALSE to terminate when no jobs are retrieved.
 #' @param source Specify source to analyse
@@ -19,6 +20,7 @@
 #' @export
 analyse <- function(
     db,
+    db_legacy=F,
     mode="local",
     wait=FALSE,
     source="unp",
@@ -30,7 +32,6 @@ analyse <- function(
     base_dir="",
     sleep = NULL
     ) {
-  db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
   process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
 
   cont <- TRUE
@@ -45,13 +46,11 @@ analyse <- function(
       if (debug) {
         ss <- fetchRecordingDebug(db, source, id)
       } else {
-        ss <-fetchUnanalysedRecordings(db, source, process_id)
+        ss <-fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
         if (nrow(ss) == 0) {
           if (wait == FALSE) { cont <- FALSE;}
           else { Sys.sleep(10)}
         }
-        dbDisconnect(db)
-        db <- dbConnect(MariaDB(), user=dbuser, password=password, dbname=dbname, host=host, port=port)
       }
     }
     if (mode=="web") {

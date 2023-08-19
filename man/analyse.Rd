@@ -6,6 +6,7 @@
 \usage{
 analyse(
   db,
+  db_legacy = F,
   mode = "local",
   wait = FALSE,
   source = "unp",
@@ -20,6 +21,8 @@ analyse(
 }
 \arguments{
 \item{db}{database connector}
+
+\item{db_legacy}{If TRUE allows use with RMariaDB connectors that have issues with stored procedures}
 
 \item{mode}{"web" for online files, or "local" for local files}
 
