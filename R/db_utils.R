@@ -49,7 +49,7 @@ fetchRecordingDebug <- function(db, source, id) {
 
 fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
   if (legacy==TRUE) {
-    sql <- past0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
+    sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
 	               "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
