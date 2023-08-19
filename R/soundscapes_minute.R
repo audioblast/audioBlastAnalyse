@@ -43,7 +43,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
 
     if (duration - (i-1)*60 < 0) return()
 
-    if (i == duration) {
+    if (i*60 == duration) {
         w <- readAudio(tmp, from=(i-1)*60, units="seconds")
     } else {
         w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
