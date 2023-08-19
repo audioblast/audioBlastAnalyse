@@ -47,7 +47,20 @@ fetchRecordingDebug <- function(db, source, id) {
   return(ss)
 }
 
-fetchDownloadableRecordings <- function(db, source, process_id) {
+fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
+  if (legacy==TRUE) {
+    sql <- past0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
+                 "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
+                 "FROM `tasks` LEFT JOIN `tasks-progress` ",
+	               "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
+                 "WHERE `tasks`.`source` = '", source, "', ",
+                 "AND `tasks`.`id` = (SELECT `id` FROM `tasks` WHERE `source` = '", source, "' ORDER BY RAND() LIMIT 1) ",
+                 "AND `tasks-progress`.`started` IS NULL;")
+    abdbExecute(db, sql)
+    sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = '", process_id, "';")
+    ss <- abdbGetQuery(db, sql)
+    return(ss)
+  }
   sql <- paste0("CALL `get-tasks-by-file`(",
                 dbQuoteString(db, process_id), ",",
                 dbQuoteString(db, source), ");")
