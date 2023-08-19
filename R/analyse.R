@@ -10,6 +10,7 @@
 #' @param verbose Gives verbose output if TRUE
 #' @param force Forces recalculation of analyses if TRUE
 #' @param base_dir Directory relative paths are located in
+#' @param retain If TRUE will save web files to base_dir
 #' @param sleep Number of seconds to sleep after all jobs are complete before
 #'   requesting additional work from the database. Default (NULL) cancels the task.
 #' @importFrom tools file_ext
@@ -28,6 +29,7 @@ analyse <- function(
     verbose=FALSE,
     force=FALSE,
     base_dir="",
+    retain=F,
     sleep = NULL
     ) {
   process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
@@ -91,6 +93,9 @@ analyse <- function(
       }
     }
     if (mode=="web") {
+      if (retain) {
+        file.copy(tmp, paste(base_dir, file_ext(ss[1, "file"], sep="/")))
+      }
       unlink(tmp)
     }
     if (debug) {

@@ -15,6 +15,7 @@ analyse(
   verbose = FALSE,
   force = FALSE,
   base_dir = "",
+  retain = F,
   sleep = NULL
 )
 }
@@ -38,6 +39,8 @@ analyse(
 \item{force}{Forces recalculation of analyses if TRUE}
 
 \item{base_dir}{Directory relative paths are located in}
+
+\item{retain}{If TRUE will save web files to base_dir}
 
 \item{sleep}{Number of seconds to sleep after all jobs are complete before
 requesting additional work from the database. Default (NULL) cancels the task.}
