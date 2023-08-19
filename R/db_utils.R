@@ -66,11 +66,11 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
     return(ss)
   } else {
     sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
-                  "SELECT `", process_id, "`, NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
+                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
                   "FROM `tasks` LEFT JOIN `tasks-progress` ",
 	                "ON `tasks`.`source` = `tasks-progress`.`source` ",
                   "AND `tasks`.`id` = `tasks-progress`.`id` ",
-                  "WHERE `tasks`.`source` = `in_source` ",
+                  "WHERE `tasks`.`source` = '", source, "' ",
                   "AND `tasks-progress`.`started` IS NULL ",
                   "ORDER BY RAND() ",
                   "LIMIT 10;")
