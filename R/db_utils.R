@@ -73,7 +73,7 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
                   "WHERE `tasks`.`source` = `in_source` ",
                   "AND `tasks-progress`.`started` IS NULL ",
                   "ORDER BY RAND() ",
-                  "LIMIT `n`;")
+                  "LIMIT 10;")
     abdbExecute(db, sql)
     sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = `", process_id, "`;")
     ss <- abdbGetQuery(db, sql)
