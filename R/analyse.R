@@ -95,8 +95,6 @@ analyse <- function(
     if (mode=="web") {
       if (retain) {
         file.copy(tmp, paste(base_dir, ss[1, "file"], sep="/"))
-        print(paste(base_dir, ss[1, "file"], sep="/"))
-        stop()
       }
       unlink(tmp)
     }
