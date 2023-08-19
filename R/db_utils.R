@@ -53,7 +53,7 @@ fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
 	               "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
-                 "WHERE `tasks`.`source` = '", source, "', ",
+                 "WHERE `tasks`.`source` = '", source, "' ",
                  "AND `tasks`.`id` = (SELECT `id` FROM `tasks` WHERE `source` = '", source, "' ORDER BY RAND() LIMIT 1) ",
                  "AND `tasks-progress`.`started` IS NULL;")
     abdbExecute(db, sql)
