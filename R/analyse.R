@@ -3,7 +3,6 @@
 #' @param db database connector
 #' @param db_legacy If TRUE allows use with RMariaDB connectors that have issues with stored procedures
 #' @param mode "web" for online files, or "local" for local files
-#' @param wait FALSE to terminate when no jobs are retrieved.
 #' @param source Specify source to analyse
 #' @param debug If TRUE and used with id and task then allows for debugging a single recording
 #' @param id Specify id of a file within source to analyse (only used with debug=T)
@@ -14,7 +13,7 @@
 #' @param sleep Number of seconds to sleep after all jobs are complete before
 #'   requesting additional work from the database. Default (NULL) cancels the task.
 #' @importFrom tools file_ext
-#' @importFrom DBI dbDisconnect dbConnect
+#' @importFrom DBI dbDisconnect
 #' @importFrom cli hash_sha256
 #' @importFrom RMariaDB MariaDB
 #' @export
@@ -22,7 +21,6 @@ analyse <- function(
     db,
     db_legacy=F,
     mode="local",
-    wait=FALSE,
     source="unp",
     debug=FALSE,
     id=NULL,
@@ -41,6 +39,10 @@ analyse <- function(
         ss <- fetchRecordingDebug(db, source, id)
       } else {
         ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
+        if (nrow(ss) == 0) {
+          if (is.null(sleep)) { cont <- FALSE;}
+          else { Sys.sleep(sleep)}
+        }
       }
     } else {
       if (debug) {
@@ -48,8 +50,8 @@ analyse <- function(
       } else {
         ss <-fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
         if (nrow(ss) == 0) {
-          if (wait == FALSE) { cont <- FALSE;}
-          else { Sys.sleep(10)}
+          if (is.null(sleep)) { cont <- FALSE;}
+          else { Sys.sleep(sleep)}
         }
       }
     }

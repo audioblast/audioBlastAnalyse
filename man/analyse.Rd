@@ -8,7 +8,6 @@ analyse(
   db,
   db_legacy = F,
   mode = "local",
-  wait = FALSE,
   source = "unp",
   debug = FALSE,
   id = NULL,
@@ -25,8 +24,6 @@ analyse(
 \item{db_legacy}{If TRUE allows use with RMariaDB connectors that have issues with stored procedures}
 
 \item{mode}{"web" for online files, or "local" for local files}
-
-\item{wait}{FALSE to terminate when no jobs are retrieved.}
 
 \item{source}{Specify source to analyse}
 
