@@ -40,7 +40,7 @@ analyse <- function(
       if (debug) {
         ss <- fetchRecordingDebug(db, source, id)
       } else {
-        ss <- fetchDownloadableRecordings(db, source, process_id)
+        ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
       }
     } else {
       if (debug) {
