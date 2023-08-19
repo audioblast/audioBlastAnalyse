@@ -55,13 +55,31 @@ fetchDownloadableRecordings <- function(db, source, process_id) {
   return(ss)
 }
 
-fetchUnanalysedRecordings <- function(db, source, process_id) {
-  sql <- paste0("CALL `get-tasks`(",
-                dbQuoteString(db, process_id),
-                ", 10, ",
-                dbQuoteString(db, source), ");")
-  ss <- abdbGetQuery(db, sql)
-  return(ss)
+fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
+  #Legacy provides a means of running on NHM HPC
+  if (legacy==FALSE) {
+    sql <- paste0("CALL `get-tasks`(",
+                  dbQuoteString(db, process_id),
+                  ", 10, ",
+                  dbQuoteString(db, source), ");")
+    ss <- abdbGetQuery(db, sql)
+    return(ss)
+  } else {
+    sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
+                  "SELECT `", process_id, "`, NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
+                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
+	                "ON `tasks`.`source` = `tasks-progress`.`source` ",
+                  "AND `tasks`.`id` = `tasks-progress`.`id` ",
+                  "WHERE `tasks`.`source` = `in_source` ",
+                  "AND `tasks-progress`.`started` IS NULL ",
+                  "ORDER BY RAND() ",
+                  "LIMIT `n`;")
+    abdbExecute(sql)
+    sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = `", process_id, "`;")
+    ss <- abdbGetQuery(db, sql)
+    return(ss)
+  }
+
 }
 
 deleteToDo <- function(db, source, id, task, process) {
