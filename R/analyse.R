@@ -94,7 +94,8 @@ analyse <- function(
     }
     if (mode=="web") {
       if (retain) {
-        file.copy(tmp, paste(base_dir, paste(ss[[i, "source"]], ss[[i, "if"]], sep="_"), sep="/"))
+        nfn <- paste0(paste(ss[[i, "source"]], ss[[i, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
+        file.copy(tmp, paste(base_dir, nfn, sep="/"))
       }
       unlink(tmp)
     }
