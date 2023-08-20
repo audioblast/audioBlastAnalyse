@@ -1,4 +1,7 @@
-#' Run all analyses
+#' Run audioBlast analyses
+#'
+#' This is the main function for analysing recordings from audioBlast in the R
+#' environment.
 #'
 #' @param db database connector
 #' @param db_legacy If TRUE allows use with RMariaDB connectors that have issues with stored procedures
@@ -32,47 +35,67 @@ analyse <- function(
     retain=F,
     sleep = NULL
     ) {
+
+  # Generate a unique process_id. This is used to identify this analysis process to
+  # the audioBlast database when assigning outstanding analysis tasks to this process.
   process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
 
   cont <- TRUE
   while (cont) {
     if (mode=="web") {
+      # The web mode is used to analyse files from a website (such as
+      # https://bio.acousti.ca). Files must be downloaded before analysis (and may
+      # be retained if retain=TRUE).
       if (debug) {
+        # Debug mode is used to debug an individual recording
         ss <- fetchRecordingDebug(db, source, id)
       } else {
+        # For a recording with 1 or more oustanding tasks, get all oustanding
+        # tasks for that recording.
         ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
         if (nrow(ss) == 0) {
-          if (is.null(sleep)) { cont <- FALSE;}
-          else { Sys.sleep(sleep)}
+          if (is.null(sleep)) {
+            # Stop further execution
+            cont <- FALSE;
+          } else {
+            # Sleep for sleep seconds before checking for new tasks
+            Sys.sleep(sleep)
+          }
         }
       }
     } else {
+      # Files for analysis are mounted locally
       if (debug) {
+        # Debug mode is used to debug an individual recording
         ss <- fetchRecordingDebug(db, source, id)
       } else {
+        # Fetch 10 outstanding tasks on locally mounted files
         ss <-fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
         if (nrow(ss) == 0) {
-          if (is.null(sleep)) { cont <- FALSE;}
-          else { Sys.sleep(sleep)}
+          if (is.null(sleep)) {
+            # Stop further execution
+            cont <- FALSE;
+          } else {
+            # Sleep for sleep seconds before checking for new tasks
+            Sys.sleep(sleep)
+          }
         }
       }
     }
     if (mode=="web") {
+      # Download file into system temp directory
       tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
       dl_file(ss[1, "file"], tmp)
-    }
-
-    if (nrow(ss)==0) {
-      if (is.null(sleep)) cont <- FALSE
-      else Sys.sleep(sleep)
     }
 
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
         if (mode=="local") {
+          # tmp is path to file
           tmp <- paste0(base_dir,ss[i, "file"])
         }
         if (debug) {
+          # In dbeug mode redo all analyses for checking
           force <- TRUE
         } else {
           task <- ss[[i, "task"]]
@@ -94,12 +117,15 @@ analyse <- function(
     }
     if (mode=="web") {
       if (retain) {
+        # Move downloaded temp file to base_dir with appropriate filename
         nfn <- paste0(paste(ss[[i, "source"]], ss[[i, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
         file.copy(tmp, paste(base_dir, nfn, sep="/"))
       }
+      # Delete temporary file
       unlink(tmp)
     }
     if (debug) {
+      # Debug mode is for debugging a single recording
       cont <- FALSE
     }
   }

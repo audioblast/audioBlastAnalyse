@@ -2,7 +2,7 @@
 % Please edit documentation in R/analyse.R
 \name{analyse}
 \alias{analyse}
-\title{Run all analyses}
+\title{Run audioBlast analyses}
 \usage{
 analyse(
   db,
@@ -46,5 +46,6 @@ analyse(
 requesting additional work from the database. Default (NULL) cancels the task.}
 }
 \description{
-Run all analyses
+This is the main function for analysing recordings from audioBlast in the R
+environment.
 }

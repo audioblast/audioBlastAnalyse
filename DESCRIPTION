@@ -1,12 +1,12 @@
 Package: audioBlastAnalyse
-Title: Analysis service for audioBLAST!
+Title: Analysis service for audioBlast!
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Ed",
            family = "Baker",
            role = c("aut", "cre"),
            email = "ed@ebaker.me.uk")
-Description: Runs any R based analysis for audioBLAST!
+Description: Runs any R based analysis for audioBlast!
 License: GPL-3
 Encoding: UTF-8
 Language: en-GB
