@@ -36,6 +36,8 @@ recordings_calculated <- function(db, source, id, file, type, duration, tmp, for
   } else {
     tryCatch({
       w <- readAudio(tmp)
+      if (is.logical(w)) return()
+
       d <- duration(w)
       print(paste("Duration is: ", duration))
       sql = paste0("UPDATE `recordings-calculated` SET `duration` = ",

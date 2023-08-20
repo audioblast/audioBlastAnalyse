@@ -42,6 +42,8 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
         w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
     }
 
+    if (is.logical(w)) return()
+
     #If only one value can't calculate TDSC (a failure mode for recordings)
     if (length(unique(w@left)) == 1) return()
 

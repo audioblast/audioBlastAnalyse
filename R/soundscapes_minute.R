@@ -47,6 +47,8 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
         w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
     }
 
+    if (is.logical(w)) return()
+
     if (verbose) { print(paste("aci startTime:",(i-1)*60))}
     v <- allChannels(w, ACI, channel.param="channel")
     insertAnalysis(db, "analysis-aci", source, id, 60, (i-1)*60, v)
