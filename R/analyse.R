@@ -17,7 +17,6 @@
 #' @param sleep Number of seconds to sleep after all jobs are complete before
 #'   requesting additional work from the database. Default (NULL) cancels the task.
 #' @importFrom tools file_ext
-#' @importFrom DBI dbDisconnect
 #' @importFrom cli hash_sha256
 #' @importFrom RMariaDB MariaDB
 #' @export
@@ -129,6 +128,5 @@ analyse <- function(
       cont <- FALSE
     }
   }
-  dbDisconnect(db)
   return();
 }
