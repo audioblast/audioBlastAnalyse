@@ -13,15 +13,12 @@ Language: en-GB
 Imports:
     av,
     cli,
-    DBI, 
-    RMariaDB, 
-    seewave, 
-    tdsc, 
-    curl, 
-    tuneR, 
-    rjson, 
+    DBI,
+    rjson,
+    seewave,
     sonicscrewdriver,
-    soundecology
+    soundecology,
+    tdsc
 LazyData: true
 Roxygen: list(markdown = TRUE)
 Suggests:

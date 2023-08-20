@@ -15,8 +15,6 @@
 #' @param force If TRUE recalculates all values
 #' @param verbose If TRUE outputs debugging information
 #' @export
-#' @importFrom DBI dbConnect dbSendQuery dbFetch dbClearResult dbExecute dbGetRowCount
-#' @importFrom curl curl_download
 #' @importFrom sonicscrewdriver readAudio rainfallDetection allChannels channels_se
 #' @importFrom rjson toJSON
 #' @importFrom seewave ACI H sh meanspec M th soundscapespec NDSI env

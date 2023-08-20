@@ -18,7 +18,6 @@
 #'   requesting additional work from the database. Default (NULL) cancels the task.
 #' @importFrom tools file_ext
 #' @importFrom cli hash_sha256
-#' @importFrom RMariaDB MariaDB
 #' @export
 analyse <- function(
     db,
