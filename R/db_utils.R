@@ -49,13 +49,15 @@ fetchRecordingDebug <- function(db, source, id) {
 
 fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
   if (legacy==TRUE) {
+    sql <- paste0("SELECT `id` FROM `tasks` WHERE `source` = '", source, "' ORDER BY RAND() LIMIT 1;")
+    ss <- abdbGetQuery(db, sql)
     sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
-                 "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
-                 "FROM `tasks` LEFT JOIN `tasks-progress` ",
-	               "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
-                 "WHERE `tasks`.`source` = '", source, "' ",
-                 "AND `tasks`.`id` = (SELECT `id` FROM `tasks` WHERE `source` = '", source, "' ORDER BY RAND() LIMIT 1) ",
-                 "AND `tasks-progress`.`started` IS NULL;")
+                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
+                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
+                  "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
+                  "WHERE `tasks`.`source` = '", source, "' ",
+                  "AND `tasks`.`id` = '", ss[1, "id"], "' ",
+                  "AND `tasks-progress`.`started` IS NULL;")
     abdbExecute(db, sql)
     sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = '", process_id, "';")
     ss <- abdbGetQuery(db, sql)
