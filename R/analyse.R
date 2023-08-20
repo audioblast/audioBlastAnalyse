@@ -32,7 +32,7 @@ analyse <- function(
     verbose=FALSE,
     force=FALSE,
     base_dir="",
-    retain=F,
+    retain=FALSE,
     sleep = NULL
     ) {
 
