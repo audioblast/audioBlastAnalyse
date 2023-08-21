@@ -26,3 +26,4 @@ Suggests:
     testthat,
     covr
 RoxygenNote: 7.2.3
+ByteCompile: true
