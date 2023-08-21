@@ -115,7 +115,7 @@ analyse <- function(
           tmp <- paste0(base_dir,ss[i, "file"])
         }
         if (debug) {
-          # In dbeug mode redo all analyses for checking
+          # In debug mode redo all analyses for checking
           force <- TRUE
         } else {
           task <- ss[[i, "task"]]
