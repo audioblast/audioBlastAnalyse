@@ -2,8 +2,15 @@
 #'
 #' Analyses performed:
 #' - ACI
+#' - ADI
 #' - Bedoya rainfall
 #' - Bioacoustic index
+#' - Evenness
+#' - H
+#' - M
+#' - NDSI
+#' - SH
+#' - TH
 #'
 #' @param db database connector
 #' @param source Source

@@ -39,7 +39,14 @@ soundscapes_by_minute(
 Analyses performed:
 \itemize{
 \item ACI
+\item ADI
 \item Bedoya rainfall
 \item Bioacoustic index
+\item Evenness
+\item H
+\item M
+\item NDSI
+\item SH
+\item TH
 }
 }
