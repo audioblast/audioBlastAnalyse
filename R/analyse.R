@@ -21,7 +21,7 @@
 #' @export
 analyse <- function(
     db,
-    db_legacy=F,
+    db_legacy=FALSE,
     mode="local",
     source="unp",
     debug=FALSE,
@@ -33,6 +33,28 @@ analyse <- function(
     retain=FALSE,
     sleep = NULL
     ) {
+
+  # Parameters check
+  if (!inherits(db, "MariaDBConnection")) stop("db is not a MariaDBConnection.")
+  if (!is.logical(db_legacy)) stop("db_legacy must be logical.")
+  if (!(mode %in% c("local", "web"))) stop("mode must be one of: web, local.")
+  if (!is.character(source)) stop("source must be a character vector.")
+  if (!is.logical(debug)) stop("debug must be logical.")
+  if (debug==FALSE) {
+    if (!is.null(id)) warning("id specified when debug=FALSE. This will have no effect.")
+    if (!is.null(task)) warning("task specified when debug=FALSE. This will have no effect.")
+  }
+  if (debug==TRUE) {
+    if (!is.character(id)) stop("id must be a character vector.")
+    if (is.null(id)) stop("id must be specified when debug=TRUE")
+    if (!is.character(task)) stop("task must be a character vector.")
+    if (is.null(task)) stop("task must be specified when debug=TRUE")
+  }
+  if (!is.logical(verbose)) stop("verbose must be logical.")
+  if (!is.logical(force)) stop("force must be logical.")
+  if (!is.character(base_dir)) stop("base_dir must be a character vector.")
+  if (!is.logical(retain)) stop("retain must be logical.")
+  if (!(is.null(sleep) || is.numeric(sleep))) stop("sleep must be NULL or numeric")
 
   # Generate a unique process_id. This is used to identify this analysis process to
   # the audioBlast database when assigning outstanding analysis tasks to this process.

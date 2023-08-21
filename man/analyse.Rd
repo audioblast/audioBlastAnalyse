@@ -6,7 +6,7 @@
 \usage{
 analyse(
   db,
-  db_legacy = F,
+  db_legacy = FALSE,
   mode = "local",
   source = "unp",
   debug = FALSE,
