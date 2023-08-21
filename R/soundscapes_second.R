@@ -25,7 +25,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   }
 
   if (duration == 0) {
-    print("Provided duration is zero -- skipping")
+    if (verbose) print("Provided duration is zero -- skipping")
     return()
   }
 
@@ -47,16 +47,16 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
     #If only one value can't calculate TDSC (a failure mode for recordings)
     if (length(unique(w@left)) == 1) return()
 
-    if (verbose) { print(paste("tdsc startTime:",(i-1)))}
+    if (verbose) print(paste("tdsc startTime:",(i-1)))
     v <- allChannels(w, tdsc, max_D=14, channel.param=NULL, output.FUN = channels_tdsc)
-
     insertAnalysis(db, "analysis-tdsc", source, id, 1, i-1, v)
 
   }
   sql = paste0("UPDATE `recordings-calculated` SET `soundscapes_second` = 1 ",
                "WHERE `source` = ", dbQuoteString(db, source),
                " AND `id` = ", dbQuoteString(db, id), ";")
-  abdbExecute(db, sql)
+  dbeq <- abdbExecute(db, sql)
+  if (verbose) print(dbeq)
 }
 
 channels_tdsc <- function(...) {

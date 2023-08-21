@@ -121,15 +121,15 @@ analyse <- function(
           task <- ss[[i, "task"]]
         }
         if (task == "recordings_calculated") {
-          print("Recordings calculated")
+          if (verbose) print("Recordings calculated")
           recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
         } else if (task == "soundscapes_minute") {
-          print("Soundscapes minutes")
+          if (verbose) print("Soundscapes minutes")
           soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
         } else if (task == "soundscapes_second") {
-          print("Soundscapes seconds")
+          if (verbose) print("Soundscapes seconds")
           soundscapes_by_second(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
         }

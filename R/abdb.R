@@ -3,7 +3,6 @@ backoff <- function() {
 }
 
 abdbExecute <- function(db, query) {
-  print(query)
   for (i in backoff()) {
     ret <- tryCatch({
       dbExecute(db, query)
@@ -22,6 +21,7 @@ abdbExecute <- function(db, query) {
     }
     stop("Too many retires of query")
   }
+  invisible(query)
 }
 
 abdbGetQuery <- function(db, query) {
