@@ -21,7 +21,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   print(tmp)
   n <- ceiling(duration)
   if (force==TRUE) {
-    deleteAnalysis(db, "analysis-tdsc", source, id)
+    deleteAllAnalyses(db, source, id, justR=TRUE)
   }
 
   if (duration == 0) {

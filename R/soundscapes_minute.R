@@ -24,9 +24,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   print(tmp)
   n <- ceiling(duration/60)
   if (force==TRUE) {
-    deleteAnalysis(db, "analysis-aci", source, id)
-    deleteAnalysis(db, "analysis-bedoya", source, id)
-    #ToDo: add other analyses
+    deleteAllAnalyses(db, source, id, justR=TRUE)
   }
 
   if (duration == 0) {

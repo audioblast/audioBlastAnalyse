@@ -6,6 +6,32 @@ deleteAnalysis <- function(db, table, source, id){
       )
 }
 
+#' Delete all analyses for a recording
+#'
+#' @param db A database connection
+#' @param source Source of recording
+#' @param id ID of recording
+#' @param justR If FALSE delete all analyses for recording. If TRUE (default) only
+#'   delete analyses made by this package.
+deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
+  deleteAnalysis(db, "analysis-aci", source, id)
+  deleteAnalysis(db, "analysis-adi", source, id)
+  deleteAnalysis(db, "analysis-bedoya", source, id)
+  deleteAnalysis(db, "analysis-bi", source, id)
+  deleteAnalysis(db, "analysis-evenness", source, id)
+  deleteAnalysis(db, "analysis-H", source, id)
+  deleteAnalysis(db, "analysis-M", source, id)
+  deleteAnalysis(db, "analysis-ndsi", source, id)
+  deleteAnalysis(db, "analysis-sh", source, id)
+  deleteAnalysis(db, "analysis-tdsc", source, id)
+  deleteAnalysis(db, "analysis-tdsc5x5", source, id)
+  deleteAnalysis(db, "analysis-th", source, id)
+
+  if (justR==FALSE) {
+    deleteAnalysis(db, "analysis-audiowaveform", source, id)
+  }
+}
+
 insertAnalysis <- function(db, table, source, id, duration, startTime, result){
   for (channel in 1:length(result)) {
     sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', '", duration, "', ",channel, ", ", startTime,", '", result[channel],"') ON DUPLICATE KEY UPDATE `value` = '", result[channel], "';")
