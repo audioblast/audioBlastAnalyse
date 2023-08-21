@@ -38,15 +38,15 @@ soundscapes_by_minute(
 \description{
 Analyses performed:
 \itemize{
-\item ACI
-\item ADI
+\item ACI (Acoustic Complexity Index)
+\item ADI (Acoustic Diversity Index)
 \item Bedoya rainfall
-\item Bioacoustic index
-\item Evenness
-\item H
-\item M
-\item NDSI
-\item SH
-\item TH
+\item BI (Bioacoustic Index)
+\item Acoustic Evenness
+\item H (Acoustic Entropy)
+\item M (Amplitude Index)
+\item NDSI (Normalised Difference Soundscape Index)
+\item SH (Spectral Entropy)
+\item TH (Temporal Entropy)
 }
 }

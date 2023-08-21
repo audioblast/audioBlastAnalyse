@@ -1,16 +1,16 @@
 #' Analyses soundscapes in one minute chunks
 #'
 #' Analyses performed:
-#' - ACI
-#' - ADI
+#' - ACI (Acoustic Complexity Index)
+#' - ADI (Acoustic Diversity Index)
 #' - Bedoya rainfall
-#' - Bioacoustic index
-#' - Evenness
-#' - H
-#' - M
-#' - NDSI
-#' - SH
-#' - TH
+#' - BI (Bioacoustic Index)
+#' - Acoustic Evenness
+#' - H (Acoustic Entropy)
+#' - M (Amplitude Index)
+#' - NDSI (Normalised Difference Soundscape Index)
+#' - SH (Spectral Entropy)
+#' - TH (Temporal Entropy)
 #'
 #' @param db database connector
 #' @param source Source
