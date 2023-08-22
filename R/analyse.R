@@ -103,9 +103,20 @@ analyse <- function(
       }
     }
     if (mode=="web") {
-      # Download file into system temp directory
-      tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
-      dl_file(ss[1, "file"], tmp)
+      if (retain==TRUE) {
+        nfn <- paste0(paste(ss[[i, "source"]], ss[[i, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
+        if (file.exists(nfn)) {
+          tmp <- nfn
+        } else {
+          # Download file into system temp directory
+          tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
+          dl_file(ss[1, "file"], tmp)
+        }
+      } else {
+        # Download file into system temp directory
+        tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
+        dl_file(ss[1, "file"], tmp)
+      }
     }
 
     if (nrow(ss)>0) {
