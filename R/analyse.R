@@ -104,7 +104,7 @@ analyse <- function(
     }
     if (mode=="web") {
       if (retain==TRUE) {
-        nfn <- paste0(paste(ss[[i, "source"]], ss[[i, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
+        nfn <- paste0(paste(ss[[1, "source"]], ss[[1, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
         if (file.exists(nfn)) {
           tmp <- nfn
         } else {
