@@ -121,6 +121,7 @@ analyse <- function(
 
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
+        print(paste("ID: ", ss[i, "id"]))
         if (mode=="local") {
           # tmp is path to file
           tmp <- paste0(base_dir,ss[i, "file"])
