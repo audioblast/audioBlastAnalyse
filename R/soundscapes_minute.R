@@ -46,7 +46,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     to <- (i-1)*60
     complete <- 1
 
-    if (duration < 60 || duration - (i-1)*60 < 60) {
+    if (duration < 60 || (duration - (i-1)*60) < 60) {
       complete <- 0
     }
 
