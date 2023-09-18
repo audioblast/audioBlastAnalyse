@@ -32,9 +32,9 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   }
 }
 
-insertAnalysis <- function(db, table, source, id, startTime, result){
+insertAnalysis <- function(db, table, source, id, startTime, result, complete){
   for (channel in 1:length(result)) {
-    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', ", channel, ", ", startTime,", '", result[channel],"') ON DUPLICATE KEY UPDATE `value` = '", result[channel], "';")
+    sql <- paste0("INSERT INTO `", table, "` VALUES ('",source,"', '",id,"', ", channel, ", ", startTime,", '", result[channel],"') ON DUPLICATE KEY UPDATE `value` = '", result[channel], "', ",complete, ";")
     abdbExecute(db, sql)
   }
 }

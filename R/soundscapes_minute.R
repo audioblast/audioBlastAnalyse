@@ -42,57 +42,63 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
   for (i in (1:n)) {
     duration <- av_media_info(tmp)$duration
 
-    if (duration < 60) return()
+    from <- (i-1)*60
+    to <- (i-1)*60
+    complete <- 1
+
+    if (duration < 60) {
+      complete <- 0
+    }
 
     if (duration - (i-1)*60 < 0) return()
 
-    if (i*60 == duration) {
-        w <- readAudio(tmp, from=(i-1)*60, units="seconds")
+    if (!complete || i*60 == duration) {
+        w <- readAudio(tmp, from=from, units="seconds")
     } else {
-        w <- readAudio(tmp, from=(i-1)*60, to=i*60, units="seconds")
+        w <- readAudio(tmp, from=from, to=to, units="seconds")
     }
 
     if (is.logical(w)) return()
 
     if (verbose) print(paste("aci startTime:",(i-1)*60))
     v <- allChannels(w, ACI, channel.param="channel")
-    insertAnalysis(db, "analysis-aci", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-aci", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Bedoya startTime:",(i-1)*60))
     v <- allChannels(w, rainfallDetection, method="bedoya2017", channel.param=NULL)
-    insertAnalysis(db, "analysis-bedoya", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-bedoya", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Bioacoustic index startTime:",(i-1)*60))
     v <- allChannels(w, bioacoustic_index, channel.param=NULL, output.FUN="channels_se")
-    insertAnalysis(db, "analysis-bi", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-bi", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Acoustic diversity index startTime:",(i-1)*60))
     v <- allChannels(w, acoustic_diversity, channel.param = NULL, output.FUN = "channels_se")
-    insertAnalysis(db, "analysis-adi", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-adi", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Acoustic entropy startTime:",(i-1)*60))
     v <- allChannels(w, H, channel.param = "channel")
-    insertAnalysis(db, "analysis-H", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-H", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Acoustic evenness startTime:",(i-1)*60))
     v <- allChannels(w, acoustic_evenness, channel.param = NULL, output.FUN = "channels_se")
-    insertAnalysis(db, "analysis-evenness", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-evenness", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Spectral entropy startTime:",(i-1)*60))
     v <- allChannels(w, function(w,channel,...){m <- meanspec(w, channel=channel, plot=FALSE); return(sh(m))}, channel.param = "channel")
-    insertAnalysis(db, "analysis-sh", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-sh", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Amplitude index startTime:",(i-1)*60))
     v <- allChannels(w, M, channel.param = "channel")
-    insertAnalysis(db, "analysis-M", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-M", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("Temporal entropy startTime:",(i-1)*60))
     v <- allChannels(w, function(w,channel,...){e <- env(w, channel=channel, plot=FALSE); return(th(e))}, channel.param = "channel")
-    insertAnalysis(db, "analysis-th", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-th", source, id, (i-1)*60, v, complete)
 
     if (verbose) print(paste("NDSI startTime:",(i-1)*60))
     v <- allChannels(w, function(w,channel,...){m <- soundscapespec(w, channel=channel, plot=FALSE); return(NDSI(m))}, channel.param = "channel")
-    insertAnalysis(db, "analysis-ndsi", source, id, (i-1)*60, v)
+    insertAnalysis(db, "analysis-ndsi", source, id, (i-1)*60, v, complete)
   }
   sql = paste0("INSERT INTO `recordings-calculated` (`source`, `id`, `soundscapes_minute`) VALUES('", source, "', '", id, "', 1) ON DUPLICATE KEY UPDATE `soundscapes_minute` = 1;")
   dbeq <- abdbExecute(db, sql)
