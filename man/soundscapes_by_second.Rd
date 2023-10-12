@@ -36,7 +36,7 @@ soundscapes_by_second(
 \item{verbose}{If TRUE outputs debugging information}
 }
 \description{
-Analyses performed:
+Analyses performed (three second chunks):
 \itemize{
 \item TDSC
 }

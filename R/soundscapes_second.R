@@ -1,6 +1,6 @@
 #' Analyses soundscapes in one second chunks
 #'
-#' Analyses performed:
+#' Analyses performed (three second chunks):
 #' - TDSC
 #'
 #' @param db database connector
@@ -18,7 +18,6 @@
 #' @importFrom tdsc tdsc
 
 soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  print(tmp)
   n <- ceiling(duration)
   if (force==TRUE) {
     deleteAllAnalyses(db, source, id, justR=TRUE)
@@ -32,14 +31,18 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   for (i in (1:n)) {
     duration <- av_media_info(tmp)$duration
 
-    if (duration < 1) return()
+    from <- (i-1)*3
+    to <- (i-1)*3
+    complete <- 1
 
-    if (duration - (i-1) < 0) return()
+    if (duration < 3 || (duration - (i-1)*3) < 3) {
+      complete <- 0
+    }
 
-    if (i == duration) {
-        w <- readAudio(tmp, from=(i-1), units="seconds")
+    if (!complete || i*3 == duration) {
+      w <- readAudio(tmp, from=from, units="seconds")
     } else {
-        w <- readAudio(tmp, from=(i-1), to=i, units="seconds")
+      w <- readAudio(tmp, from=from, to=to, units="seconds")
     }
 
     if (is.logical(w)) return()
@@ -47,9 +50,9 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
     #If only one value can't calculate TDSC (a failure mode for recordings)
     if (length(unique(w@left)) == 1) return()
 
-    if (verbose) print(paste("tdsc startTime:",(i-1)))
+    if (verbose) print(paste("tdsc startTime:", from))
     v <- allChannels(w, tdsc, max_D=14, channel.param=NULL, output.FUN = channels_tdsc)
-    insertAnalysis(db, "analysis-tdsc", source, id, i-1, v)
+    insertAnalysis(db, "analysis_3sec-tdsc", source, id, from, v)
 
   }
   sql = paste0("UPDATE `recordings-calculated` SET `soundscapes_second` = 1 ",
@@ -57,6 +60,10 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
                " AND `id` = ", dbQuoteString(db, id), ";")
   dbeq <- abdbExecute(db, sql)
   if (verbose) print(dbeq)
+
+  # Temporary code to remove old TDSC
+  deleteAnalysis(db, "analysis-tdsc", source, id)
+
 }
 
 channels_tdsc <- function(...) {
