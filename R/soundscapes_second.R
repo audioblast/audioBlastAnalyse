@@ -18,7 +18,8 @@
 #' @importFrom tdsc tdsc
 
 soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
-  n <- ceiling(duration)
+  duration <- av_media_info(tmp)$duration
+  n <- ceiling(duration/3)
   if (force==TRUE) {
     deleteAllAnalyses(db, source, id, justR=TRUE)
   }
@@ -29,8 +30,6 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   }
 
   for (i in (1:n)) {
-    duration <- av_media_info(tmp)$duration
-
     from <- (i-1)*3
     to <- (i)*3
     complete <- 1
@@ -39,7 +38,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
       complete <- 0
     }
 
-    if (!complete || i*3 == duration) {
+    if (complete == 0 || i*3 == duration) {
       w <- readAudio(tmp, from=from, units="seconds")
     } else {
       w <- readAudio(tmp, from=from, to=to, units="seconds")
