@@ -43,7 +43,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     duration <- av_media_info(tmp)$duration
 
     from <- (i-1)*60
-    to <- (i-1)*60
+    to <- i*60
     complete <- 1
 
     if (duration < 60 || (duration - (i-1)*60) < 60) {
@@ -53,7 +53,8 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
     if (!complete || i*60 == duration) {
         w <- readAudio(tmp, from=from, units="seconds")
     } else {
-        w <- readAudio(tmp, from=from, to=to, units="seconds")
+      av::av_audio_convert(tmp, output="temp.wav")
+      w <- tuneR::readWave("temp.wav")
     }
 
     if (is.logical(w)) return()
