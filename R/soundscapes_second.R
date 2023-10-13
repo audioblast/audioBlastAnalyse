@@ -32,7 +32,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
     duration <- av_media_info(tmp)$duration
 
     from <- (i-1)*3
-    to <- (i-1)*3
+    to <- (i)*3
     complete <- 1
 
     if (duration < 3 || (duration - (i-1)*3) < 3) {
@@ -52,7 +52,7 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
 
     if (verbose) print(paste("tdsc startTime:", from))
     v <- allChannels(w, tdsc, max_D=14, channel.param=NULL, output.FUN = channels_tdsc)
-    insertAnalysis(db, "analysis_3sec-tdsc", source, id, from, v)
+    insertAnalysis(db, "analysis_3sec-tdsc", source, id, from, v, complete)
 
   }
   sql = paste0("UPDATE `recordings-calculated` SET `soundscapes_second` = 1 ",
