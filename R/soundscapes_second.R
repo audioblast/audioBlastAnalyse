@@ -60,9 +60,6 @@ soundscapes_by_second <- function(db, source, id, file, type, duration, tmp, for
   dbeq <- abdbExecute(db, sql)
   if (verbose) print(dbeq)
 
-  # Temporary code to remove old TDSC
-  deleteAnalysis(db, "analysis-tdsc", source, id)
-
 }
 
 channels_tdsc <- function(...) {
