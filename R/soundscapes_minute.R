@@ -26,6 +26,7 @@
 #' @importFrom rjson toJSON
 #' @importFrom seewave ACI H sh meanspec M th soundscapespec NDSI env
 #' @importFrom soundecology bioacoustic_index acoustic_diversity acoustic_evenness
+#' @importFrom tuneR readWave
 
 soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
@@ -54,7 +55,7 @@ soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, for
         w <- readAudio(tmp, from=from, units="seconds")
     } else {
       av::av_audio_convert(tmp, output="temp.wav")
-      w <- tuneR::readWave("temp.wav")
+      w <- readWave("temp.wav")
     }
 
     if (is.logical(w)) return()

@@ -18,7 +18,8 @@ Imports:
     seewave,
     sonicscrewdriver,
     soundecology,
-    tdsc
+    tdsc,
+    tuneR
 LazyData: true
 Roxygen: list(markdown = TRUE)
 Suggests:
