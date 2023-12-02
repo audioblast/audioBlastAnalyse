@@ -50,7 +50,9 @@ fetchRecordingDebug <- function(db, source, id) {
 
 fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
   if (legacy==TRUE) {
-    sql <- paste0("SELECT `id` FROM `tasks` WHERE `source` = '", source, "' ORDER BY RAND() LIMIT 1;")
+    sql <- paste0("SELECT `id` FROM `tasks` WHERE `source` = '",
+                  source,
+                  "' WHERE `task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') ORDER BY RAND() LIMIT 1;")
     ss <- abdbGetQuery(db, sql)
     sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
                   "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
@@ -64,6 +66,7 @@ fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
     ss <- abdbGetQuery(db, sql)
     return(ss)
   }
+  #TODO: Below needs to acomodate agents
   sql <- paste0("CALL `get-tasks-by-file`(",
                 dbQuoteString(db, process_id), ",",
                 dbQuoteString(db, source), ");")
