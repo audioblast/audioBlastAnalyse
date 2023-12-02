@@ -1,9 +1,9 @@
 #' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier dbSendStatement dbGetQuery
 deleteAnalysis <- function(db, table, source, id){
-    abdbExecute(
-      db,
-      paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id='",id,"'")
-      )
+  abdbExecute(
+    db,
+    paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id='",id,"'")
+    )
 }
 
 #' Delete all analyses for a recording
@@ -23,8 +23,7 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   deleteAnalysis(db, "analysis-M", source, id)
   deleteAnalysis(db, "analysis-ndsi", source, id)
   deleteAnalysis(db, "analysis-sh", source, id)
-  deleteAnalysis(db, "analysis-tdsc", source, id)
-  deleteAnalysis(db, "analysis-tdsc5x5", source, id)
+  deleteAnalysis(db, "analysis_sec-tdsc", source, id)
   deleteAnalysis(db, "analysis-th", source, id)
 
   if (justR==FALSE) {
@@ -66,7 +65,7 @@ fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
     ss <- abdbGetQuery(db, sql)
     return(ss)
   }
-  #TODO: Below needs to acomodate agents
+  #TODO: Below needs to accommodate agents
   sql <- paste0("CALL `get-tasks-by-file`(",
                 dbQuoteString(db, process_id), ",",
                 dbQuoteString(db, source), ");")
@@ -90,6 +89,7 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
 	                "ON `tasks`.`source` = `tasks-progress`.`source` ",
                   "AND `tasks`.`id` = `tasks-progress`.`id` ",
                   "WHERE `tasks`.`source` = '", source, "' ",
+                  "AND `tasks`.`task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') ",
                   "AND `tasks-progress`.`started` IS NULL ",
                   "ORDER BY RAND() ",
                   "LIMIT 10;")
@@ -98,7 +98,6 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
     ss <- abdbGetQuery(db, sql)
     return(ss)
   }
-
 }
 
 deleteToDo <- function(db, source, id, task, process) {
