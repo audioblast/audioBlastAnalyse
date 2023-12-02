@@ -1,9 +1,9 @@
 #' @importFrom DBI dbExecute dbQuoteString dbQuoteIdentifier dbSendStatement dbGetQuery
 deleteAnalysis <- function(db, table, source, id){
-    abdbExecute(
-      db,
-      paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id='",id,"'")
-      )
+  abdbExecute(
+    db,
+    paste0("DELETE FROM `",table,"` WHERE source = '",source,"' AND id='",id,"'")
+    )
 }
 
 #' Delete all analyses for a recording
@@ -97,7 +97,6 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
     ss <- abdbGetQuery(db, sql)
     return(ss)
   }
-
 }
 
 deleteToDo <- function(db, source, id, task, process) {
