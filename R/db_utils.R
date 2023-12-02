@@ -66,6 +66,7 @@ fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
     ss <- abdbGetQuery(db, sql)
     return(ss)
   }
+  #TODO: Below needs to acomodate agents
   sql <- paste0("CALL `get-tasks-by-file`(",
                 dbQuoteString(db, process_id), ",",
                 dbQuoteString(db, source), ");")
