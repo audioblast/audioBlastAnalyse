@@ -23,8 +23,7 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   deleteAnalysis(db, "analysis-M", source, id)
   deleteAnalysis(db, "analysis-ndsi", source, id)
   deleteAnalysis(db, "analysis-sh", source, id)
-  deleteAnalysis(db, "analysis-tdsc", source, id)
-  deleteAnalysis(db, "analysis-tdsc5x5", source, id)
+  deleteAnalysis(db, "analysis_sec-tdsc", source, id)
   deleteAnalysis(db, "analysis-th", source, id)
 
   if (justR==FALSE) {
