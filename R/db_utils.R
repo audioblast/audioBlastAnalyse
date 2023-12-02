@@ -89,7 +89,7 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
 	                "ON `tasks`.`source` = `tasks-progress`.`source` ",
                   "AND `tasks`.`id` = `tasks-progress`.`id` ",
                   "WHERE `tasks`.`source` = '", source, "' ",
-                  "AND `tasks`.`task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') ",
+                  "AND `tasks`.`task` IN (SELECT `task` FROM `tasks-agents` WHERE `agent`= 'abaR') ",
                   "AND `tasks-progress`.`started` IS NULL ",
                   "ORDER BY RAND() ",
                   "LIMIT 10;")
