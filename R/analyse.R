@@ -16,6 +16,7 @@
 #' @param retain If TRUE will save web files to base_dir
 #' @param sleep Number of seconds to sleep after all jobs are complete before
 #'   requesting additional work from the database. Default (NULL) cancels the task.
+#' @param save.path Path to save data
 #' @importFrom tools file_ext
 #' @importFrom cli hash_sha256
 #' @export

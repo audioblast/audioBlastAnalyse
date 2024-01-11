@@ -21,6 +21,7 @@
 #' @param tmp Location to download temp file
 #' @param force If TRUE recalculates all values
 #' @param verbose If TRUE outputs debugging information
+#' @param save.path Path to save data
 #' @export
 #' @importFrom sonicscrewdriver allChannels
 #' @importFrom seewave spec

@@ -45,6 +45,8 @@ analyse(
 
 \item{sleep}{Number of seconds to sleep after all jobs are complete before
 requesting additional work from the database. Default (NULL) cancels the task.}
+
+\item{save.path}{Path to save data}
 }
 \description{
 This is the main function for analysing recordings from audioBlast in the R

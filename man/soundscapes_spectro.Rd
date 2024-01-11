@@ -35,6 +35,8 @@ soundscapes_spectro(
 \item{force}{If TRUE recalculates all values}
 
 \item{verbose}{If TRUE outputs debugging information}
+
+\item{save.path}{Path to save data}
 }
 \description{
 Analyses performed:
