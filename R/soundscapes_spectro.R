@@ -25,7 +25,7 @@
 #' @importFrom sonicscrewdriver allChannels
 #' @importFrom seewave spec
 
-soundscapes_by_minute <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
+soundscapes_spectro <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
   print(tmp)
   n <- ceiling(duration/60)
   if (force==TRUE) {
