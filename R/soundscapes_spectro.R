@@ -70,6 +70,6 @@ soundscapes_spectro <- function(db, source, id, file, type, duration, tmp,
     if (!dir.exists(path)) {
       dir.create(path, recursive=TRUE)
     }
-    write.csv(v, paste(path, "spec.json", sep="/"))
+    write.csv(v, paste(path, "spec.csv", sep="/"))
   }
 }
