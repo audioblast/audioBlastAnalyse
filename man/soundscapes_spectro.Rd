@@ -13,7 +13,8 @@ soundscapes_spectro(
   duration,
   tmp,
   force = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  save.path = "."
 )
 }
 \arguments{

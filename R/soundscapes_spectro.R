@@ -24,8 +24,8 @@
 #' @export
 #' @importFrom sonicscrewdriver allChannels
 #' @importFrom seewave spec
-
-soundscapes_spectro <- function(db, source, id, file, type, duration, tmp, force=FALSE, verbose=FALSE) {
+soundscapes_spectro <- function(db, source, id, file, type, duration, tmp,
+                                force=FALSE, verbose=FALSE, save.path=".") {
   print(tmp)
   n <- ceiling(duration/60)
   if (force==TRUE) {
@@ -58,8 +58,16 @@ soundscapes_spectro <- function(db, source, id, file, type, duration, tmp, force
     if (is.logical(w)) return()
 
     if (verbose) print(paste("Spectro startTime:",(i-1)*60))
-    v <- allChannels(w, spec, plot=FALSE)
-    insertAnalysis(db, "analysis-spec", source, id, (i-1)*60, v, complete)
+    s <- spec(w, wl=256, plot=FALSE)
 
+    #Hack as seewave spec doesn't always work
+    ss <- seq(from=0, to=w@samp.rate/2, along.with=s[,2])
+    v <- cbind(ss, s[,2])
+
+    path <- paste(save.path, source, id, sep="/")
+    if (!dir.exists(path)) {
+      dir.create(path, recursive=TRUE)
+    }
+    write.csv(v, paste(path, "spec.json", sep="/"))
   }
 }

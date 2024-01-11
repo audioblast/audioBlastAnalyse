@@ -16,7 +16,8 @@ analyse(
   force = FALSE,
   base_dir = "",
   retain = FALSE,
-  sleep = NULL
+  sleep = NULL,
+  save.path = "."
 )
 }
 \arguments{
