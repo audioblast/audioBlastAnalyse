@@ -24,6 +24,7 @@
 #' @export
 #' @importFrom sonicscrewdriver allChannels
 #' @importFrom seewave spec
+#' @importFrom utils write.csv
 soundscapes_spectro <- function(db, source, id, file, type, duration, tmp,
                                 force=FALSE, verbose=FALSE, save.path=".") {
   print(tmp)
