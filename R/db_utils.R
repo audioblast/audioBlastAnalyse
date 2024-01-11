@@ -51,7 +51,7 @@ fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
   if (legacy==TRUE) {
     sql <- paste0("SELECT `id` FROM `tasks` WHERE `source` = '",
                   source,
-                  "' WHERE `task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') ORDER BY RAND() LIMIT 1;")
+                  "' WHERE `task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') LIMIT 1;")
     ss <- abdbGetQuery(db, sql)
     sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
                   "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
@@ -91,7 +91,6 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
                   "WHERE `tasks`.`source` = '", source, "' ",
                   "AND `tasks`.`task` IN (SELECT `task` FROM `tasks-agents` WHERE `agent`= 'abaR') ",
                   "AND `tasks-progress`.`started` IS NULL ",
-                  "ORDER BY RAND() ",
                   "LIMIT 10;")
     abdbExecute(db, sql)
     sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = '", process_id, "';")

@@ -149,6 +149,9 @@ analyse <- function(
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
         }
       }
+    } else {
+      if (verbose) print("No outstanding tasks")
+      cont <- FALSE
     }
     if (mode=="web") {
       if (retain) {
