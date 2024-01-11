@@ -2,7 +2,7 @@
 % Please edit documentation in R/soundscapes_spectro.R
 \name{soundscapes_spectro}
 \alias{soundscapes_spectro}
-\title{Analyses soundscapes in one minute chunks}
+\title{Generate spectra for soundscapes in one minute chunks}
 \usage{
 soundscapes_spectro(
   db,
@@ -39,17 +39,5 @@ soundscapes_spectro(
 \item{save.path}{Path to save data}
 }
 \description{
-Analyses performed:
-\itemize{
-\item ACI (Acoustic Complexity Index)
-\item ADI (Acoustic Diversity Index)
-\item Bedoya rainfall
-\item BI (Bioacoustic Index)
-\item Acoustic Evenness
-\item H (Acoustic Entropy)
-\item M (Amplitude Index)
-\item NDSI (Normalised Difference Soundscape Index)
-\item SH (Spectral Entropy)
-\item TH (Temporal Entropy)
-}
+Generate spectra for soundscapes in one minute chunks
 }

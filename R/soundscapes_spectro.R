@@ -1,16 +1,4 @@
-#' Analyses soundscapes in one minute chunks
-#'
-#' Analyses performed:
-#' - ACI (Acoustic Complexity Index)
-#' - ADI (Acoustic Diversity Index)
-#' - Bedoya rainfall
-#' - BI (Bioacoustic Index)
-#' - Acoustic Evenness
-#' - H (Acoustic Entropy)
-#' - M (Amplitude Index)
-#' - NDSI (Normalised Difference Soundscape Index)
-#' - SH (Spectral Entropy)
-#' - TH (Temporal Entropy)
+#' Generate spectra for soundscapes in one minute chunks
 #'
 #' @param db database connector
 #' @param source Source
@@ -23,12 +11,10 @@
 #' @param verbose If TRUE outputs debugging information
 #' @param save.path Path to save data
 #' @export
-#' @importFrom sonicscrewdriver allChannels
 #' @importFrom seewave spec
 #' @importFrom utils write.csv
 soundscapes_spectro <- function(db, source, id, file, type, duration, tmp,
                                 force=FALSE, verbose=FALSE, save.path=".") {
-  print(tmp)
   n <- ceiling(duration/60)
   if (force==TRUE) {
     deleteAllAnalyses(db, source, id, justR=TRUE)
