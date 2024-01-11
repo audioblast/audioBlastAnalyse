@@ -144,6 +144,9 @@ analyse <- function(
           if (verbose) print("Soundscapes seconds")
           soundscapes_by_second(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
           deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
+        } else if (task == "soundscapes_spectro") {
+          soundscapes_spectro(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
+          deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
         }
       }
     }
