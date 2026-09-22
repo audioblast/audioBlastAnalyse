@@ -5,35 +5,46 @@ export(recordings_calculated)
 export(soundscapes_by_minute)
 export(soundscapes_by_second)
 export(soundscapes_spectro)
-importFrom(DBI,dbExecute)
-importFrom(DBI,dbGetQuery)
-importFrom(DBI,dbQuoteIdentifier)
-importFrom(DBI,dbQuoteString)
-importFrom(DBI,dbSendStatement)
+importFrom(DBI,
+  dbExecute,
+  dbGetQuery,
+  dbQuoteIdentifier,
+  dbQuoteString,
+  dbSendStatement
+)
 importFrom(av,av_media_info)
-importFrom(cli,hash_file_sha256)
-importFrom(cli,hash_sha256)
+importFrom(cli,
+  hash_file_sha256,
+  hash_sha256
+)
 importFrom(rjson,toJSON)
-importFrom(seewave,ACI)
-importFrom(seewave,H)
-importFrom(seewave,M)
-importFrom(seewave,NDSI)
-importFrom(seewave,duration)
-importFrom(seewave,env)
-importFrom(seewave,meanspec)
-importFrom(seewave,sh)
-importFrom(seewave,soundscapespec)
-importFrom(seewave,spec)
-importFrom(seewave,th)
-importFrom(sonicscrewdriver,allChannels)
-importFrom(sonicscrewdriver,channels_se)
-importFrom(sonicscrewdriver,rainfallDetection)
-importFrom(sonicscrewdriver,readAudio)
-importFrom(soundecology,acoustic_diversity)
-importFrom(soundecology,acoustic_evenness)
-importFrom(soundecology,bioacoustic_index)
+importFrom(seewave,
+  ACI,
+  H,
+  M,
+  NDSI,
+  env,
+  meanspec,
+  sh,
+  soundscapespec,
+  spec,
+  th
+)
+importFrom(sonicscrewdriver,
+  allChannels,
+  channels_se,
+  rainfallDetection,
+  readAudio
+)
+importFrom(soundecology,
+  acoustic_diversity,
+  acoustic_evenness,
+  bioacoustic_index
+)
 importFrom(tdsc,tdsc)
 importFrom(tools,file_ext)
 importFrom(tuneR,readWave)
-importFrom(utils,download.file)
-importFrom(utils,write.csv)
+importFrom(utils,
+  download.file,
+  write.csv
+)

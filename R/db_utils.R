@@ -99,13 +99,28 @@ fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
   }
 }
 
+#Crosses a task off: it has been done, and nobody need do it again.
 deleteToDo <- function(db, source, id, task, process) {
-  sql <- paste0("CALL `delete-task`(",
-                dbQuoteString(db, process), ", ",
-                dbQuoteString(db, source), ", ",
-                dbQuoteString(db, id), ", ",
-                dbQuoteString(db, task), ");"
-                )
-  abdbExecute(db, sql)
+  abdbExecute(
+    db,
+    "CALL `delete-task`(?, ?, ?, ?);",
+    params=list(as.character(process), as.character(source), as.character(id),
+                as.character(task)))
+}
+
+#Gives a task back, so that it is offered to whoever asks next rather than
+#held by an agent that is not going to do it. Only the claim on the task is
+#removed; the task itself stays to be done.
+#
+#A claim is never given up by itself: a task left in the hands of an agent
+#that has stopped, or that does not do that kind of work, is counted as being
+#done and is offered to nobody.
+releaseToDo <- function(db, source, id, task, process) {
+  abdbExecute(
+    db,
+    paste("DELETE FROM `tasks-progress`",
+          "WHERE `process` = ? AND `source` = ? AND `id` = ? AND `task` = ?;"),
+    params=list(as.character(process), as.character(source), as.character(id),
+                as.character(task)))
 }
 

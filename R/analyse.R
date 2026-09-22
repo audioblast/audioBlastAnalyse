@@ -12,11 +12,11 @@
 #' @param task Specify a task (for use when debug=T)
 #' @param verbose Gives verbose output if TRUE
 #' @param force Forces recalculation of analyses if TRUE
-#' @param base_dir Directory relative paths are located in
-#' @param retain If TRUE will save web files to base_dir
-#' @param sleep Number of seconds to sleep after all jobs are complete before
-#'   requesting additional work from the database. Default (NULL) cancels the task.
-#' @param save.path Path to save data
+#' @param base_dir Directory the recordings are in: the directory relative
+#'   paths are located in, and the one downloaded files are kept in. A
+#'   downloaded recording is kept under the source and id it is held by, so
+#'   that it is fetched once however many times it is analysed, and however
+#'   many agents analyse it on one machine.
 #' @importFrom tools file_ext
 #' @importFrom cli hash_sha256
 #' @export
@@ -30,10 +30,7 @@ analyse <- function(
     task=NULL,
     verbose=FALSE,
     force=FALSE,
-    base_dir="",
-    retain=FALSE,
-    sleep = NULL,
-    save.path="."
+    base_dir=""
     ) {
 
   # Parameters check
@@ -55,8 +52,6 @@ analyse <- function(
   if (!is.logical(verbose)) stop("verbose must be logical.")
   if (!is.logical(force)) stop("force must be logical.")
   if (!is.character(base_dir)) stop("base_dir must be a character vector.")
-  if (!is.logical(retain)) stop("retain must be logical.")
-  if (!(is.null(sleep) || is.numeric(sleep))) stop("sleep must be NULL or numeric")
 
   # Generate a unique process_id. This is used to identify this analysis process to
   # the audioBlast database when assigning outstanding analysis tasks to this process.
@@ -64,66 +59,30 @@ analyse <- function(
 
   cont <- TRUE
   while (cont) {
-    if (mode=="web") {
+    if (debug) {
+      # Debug mode is used to debug an individual recording
+      ss <- fetchRecordingDebug(db, source, id)
+    } else if (mode=="web") {
       # The web mode is used to analyse files from a website (such as
-      # https://bio.acousti.ca). Files must be downloaded before analysis (and may
-      # be retained if retain=TRUE).
-      if (debug) {
-        # Debug mode is used to debug an individual recording
-        ss <- fetchRecordingDebug(db, source, id)
-      } else {
-        # For a recording with 1 or more oustanding tasks, get all oustanding
-        # tasks for that recording.
-        ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
-        if (nrow(ss) == 0) {
-          if (is.null(sleep)) {
-            # Stop further execution
-            cont <- FALSE;
-          } else {
-            # Sleep for sleep seconds before checking for new tasks
-            Sys.sleep(sleep)
-          }
-        }
-      }
+      # https://bio.acousti.ca). Files are downloaded before analysis, and kept
+      # in base_dir so that a recording is only ever downloaded once. For a
+      # recording with 1 or more outstanding tasks, get all outstanding tasks
+      # for that recording.
+      ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
     } else {
-      # Files for analysis are mounted locally
-      if (debug) {
-        # Debug mode is used to debug an individual recording
-        ss <- fetchRecordingDebug(db, source, id)
-      } else {
-        # Fetch 10 outstanding tasks on locally mounted files
-        ss <-fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
-        if (nrow(ss) == 0) {
-          if (is.null(sleep)) {
-            # Stop further execution
-            cont <- FALSE;
-          } else {
-            # Sleep for sleep seconds before checking for new tasks
-            Sys.sleep(sleep)
-          }
-        }
-      }
+      # Files for analysis are mounted locally: fetch 10 outstanding tasks
+      ss <- fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
     }
-    if (mode=="web") {
-      if (retain==TRUE) {
-        nfn <- paste0(paste(ss[[1, "source"]], ss[[1, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
-        if (file.exists(nfn)) {
-          tmp <- nfn
-        } else {
-          # Download file into system temp directory
-          tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
-          dl_file(ss[1, "file"], tmp)
-        }
-      } else {
-        # Download file into system temp directory
-        tmp <- paste0(tempfile(), ".", file_ext(ss[1, "file"]))
-        dl_file(ss[1, "file"], tmp)
-      }
+    # The tasks claimed above are all of one recording, so its file is fetched
+    # once and read by each of them. Nothing is fetched when nothing was
+    # claimed: there is then no recording to fetch the file of.
+    if (mode=="web" && nrow(ss) > 0) {
+      tmp <- webFile(ss[1, "file"], ss[[1, "source"]], ss[[1, "id"]], base_dir, verbose)
     }
 
     if (nrow(ss)>0) {
       for (i in 1:nrow(ss)) {
-        print(paste("ID: ", ss[i, "id"]))
+        if (verbose) print(paste("ID: ", ss[i, "id"]))
         if (mode=="local") {
           # tmp is path to file
           tmp <- paste0(base_dir,ss[i, "file"])
@@ -134,35 +93,11 @@ analyse <- function(
         } else {
           task <- ss[[i, "task"]]
         }
-        if (task == "recordings_calculated") {
-          if (verbose) print("Recordings calculated")
-          recordings_calculated(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-          deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
-        } else if (task == "soundscapes_minute") {
-          if (verbose) print("Soundscapes minutes")
-          soundscapes_by_minute(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-          deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
-        } else if (task == "soundscapes_second") {
-          if (verbose) print("Soundscapes seconds")
-          soundscapes_by_second(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose)
-          deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
-        } else if (task == "soundscapes_spec") {
-          soundscapes_spectro(db, ss[[i, "source"]], ss[[i, "id"]], tmp, ss[[i, "type"]], as.numeric(ss[[i, "Duration"]]), tmp, force, verbose, save.path)
-          deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], task, process_id)
-        }
+        doTask(db, task, ss[[i, "source"]], ss[[i, "id"]], tmp, process_id, force, verbose)
       }
     } else {
       if (verbose) print("No outstanding tasks")
       cont <- FALSE
-    }
-    if (mode=="web") {
-      if (retain) {
-        # Move downloaded temp file to base_dir with appropriate filename
-        nfn <- paste0(paste(ss[[i, "source"]], ss[[i, "id"]], sep="_"),".",file_ext(ss[1, "file"]))
-        file.copy(tmp, paste(base_dir, nfn, sep="/"))
-      }
-      # Delete temporary file
-      unlink(tmp)
     }
     if (debug) {
       # Debug mode is for debugging a single recording
@@ -170,4 +105,37 @@ analyse <- function(
     }
   }
   return();
+}
+
+#Does one of the tasks an agent has claimed, and settles the claim on it: a
+#task that has been done is crossed off, and one that has not is given back for
+#another agent to do.
+#
+#Only recordings_calculated is done for now. The soundscape analyses are still
+#here as functions, and can be called directly, but no longer run from a
+#claimed task: the per-minute analyses are being dropped, and what becomes of
+#the rest is not settled.
+#
+#A task of any other kind is given back rather than passed over. An agent that
+#claims a task it will not do would otherwise hold it for good, and the task
+#would be counted as being in hand while nobody was doing it.
+doTask <- function(db, task, source, id, path, process, force=FALSE, verbose=FALSE) {
+  if (!identical(task, "recordings_calculated")) {
+    warning(paste0("Not a task this agent does, and given back: ", task))
+    releaseToDo(db, source, id, task, process)
+    return(invisible("released"))
+  }
+
+  if (verbose) print("Recordings calculated")
+  outcome <- recordings_calculated(db, source, id, path, force, verbose)
+
+  #Measurements the database would not keep are worth making again, so the
+  #task goes back. Anything else is done with: a recording that cannot be read
+  #will not read any better for being measured twice.
+  if (outcome == "retry") {
+    releaseToDo(db, source, id, task, process)
+    return(invisible("released"))
+  }
+  deleteToDo(db, source, id, task, process)
+  return(invisible(outcome))
 }

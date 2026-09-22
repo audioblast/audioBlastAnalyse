@@ -7,7 +7,7 @@ The system works correctly with the RMariaDB R package compiled using libmariadb
 ## Installation
 ````R
 library(devtools)
-install_github("audioblast/audioBlastIngest")
+install_github("audioblast/audioBlastAnalyse")
 ````
 ## Credits
 Initial development of audioBlast was supported by the Leverhulme Trust funded [Automated Acoustic Observatories](https://ebaker.me.uk/aao) project at the University of York.

@@ -26,5 +26,5 @@ Suggests:
     spelling,
     testthat,
     covr
-RoxygenNote: 7.2.3
 ByteCompile: true
+Config/roxygen2/version: 8.1.0

@@ -14,10 +14,7 @@ analyse(
   task = NULL,
   verbose = FALSE,
   force = FALSE,
-  base_dir = "",
-  retain = FALSE,
-  sleep = NULL,
-  save.path = "."
+  base_dir = ""
 )
 }
 \arguments{
@@ -39,14 +36,11 @@ analyse(
 
 \item{force}{Forces recalculation of analyses if TRUE}
 
-\item{base_dir}{Directory relative paths are located in}
-
-\item{retain}{If TRUE will save web files to base_dir}
-
-\item{sleep}{Number of seconds to sleep after all jobs are complete before
-requesting additional work from the database. Default (NULL) cancels the task.}
-
-\item{save.path}{Path to save data}
+\item{base_dir}{Directory the recordings are in: the directory relative
+paths are located in, and the one downloaded files are kept in. A
+downloaded recording is kept under the source and id it is held by, so
+that it is fetched once however many times it is analysed, and however
+many agents analyse it on one machine.}
 }
 \description{
 This is the main function for analysing recordings from audioBlast in the R

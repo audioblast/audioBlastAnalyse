@@ -2,19 +2,9 @@
 % Please edit documentation in R/recordings_calculated.R
 \name{recordings_calculated}
 \alias{recordings_calculated}
-\title{Calculate basic file data}
+\title{Measure a recording}
 \usage{
-recordings_calculated(
-  db,
-  source,
-  id,
-  file,
-  type,
-  duration,
-  tmp,
-  force = FALSE,
-  verbose = FALSE
-)
+recordings_calculated(db, source, id, path, force = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{db}{database connector}
@@ -23,18 +13,43 @@ recordings_calculated(
 
 \item{id}{id (unique within source)}
 
-\item{file}{url to file}
+\item{path}{Path to the file holding the recording}
 
-\item{type}{MIME type}
+\item{force}{If TRUE measures the recording again, however it went before}
 
-\item{duration}{audio duration}
+\item{verbose}{If TRUE says what is being measured}
+}
+\value{
+Invisibly, what came of it, which tells an agent what to do with the
+task it was doing (see analyse()):
+\itemize{
+\item \code{measured}: the recording was measured, and the measurements written.
+\item \code{kept}: it had been measured before, and was left as it was.
+\item \code{unmeasurable}: no audio could be read from it, and that was written.
+\item \code{retry}: the database would not keep the measurements. Nothing is known
+about the recording that wasn't before, so the task is worth doing again.
+}
 
-\item{tmp}{Location to download temp file}
-
-\item{force}{If TRUE recalculates all values}
-
-\item{verbose}{If TRUE outputs debugging information}
+Only \code{retry} is worth doing again: a recording that cannot be read will not
+read any better for being measured twice.
 }
 \description{
-Calculates basic file data such as a sha256 hash, duration and channels.
+Measures the file a recording is held in and writes what it found to the
+\code{recordings-calculated} table: its SHA-256 hash, how long it is, how many
+channels it has, the rate it was sampled at, the bits a sample is held in,
+its bit rate, the format it is in and its size in bytes.
+}
+\details{
+These are measurements of the file itself, and are kept apart from what a
+source says about a recording, which is in the \code{recordings} table. A source
+that says its recordings are 48 kHz can then be asked whether they are.
+
+The file is never decoded: its bytes are read once for the hash, and the
+rest is what the container says of itself, so measuring an hour of audio
+costs what measuring a second does. Measurements that need the audio itself,
+such as its peak amplitude, belong with the analyses that decode it.
+
+A recording that cannot be read is recorded as such rather than passed over,
+so that a source of files that have moved, or that were never audio, can be
+found by asking the table rather than by reading logs.
 }
