@@ -84,7 +84,12 @@ mimeExtension <- function(type) {
 safeName <- function(x) {
   x <- as.character(x)[1]
   if (is.na(x)) x <- ""
-  safe <- gsub("[^A-Za-z0-9._-]", "-", x)
+  #A value that is not UTF-8, as one read over a connection speaking Latin-1
+  #is not, cannot be read as characters at all, and is read as bytes instead.
+  #Only then: read as bytes, a character of two bytes in UTF-8 would be two
+  #dashes rather than one, and a recording already kept would be looked for
+  #under a new name.
+  safe <- gsub("[^A-Za-z0-9._-]", "-", x, useBytes=!validUTF8(x))
   named <- identical(safe, x) && nchar(safe) > 0 && nchar(safe) <= 100 &&
     !grepl("^[.]+$", safe) && !isReservedName(safe)
   if (named) return(safe)

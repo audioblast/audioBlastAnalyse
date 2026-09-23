@@ -47,6 +47,18 @@ fetchRecordingDebug <- function(db, source, id) {
   return(ss)
 }
 
+#Has the connection speak UTF-8, as the database does.
+#
+#A connection speaks whatever the client and server settle on when it is
+#made, which can be Latin-1: then every value is turned into Latin-1 on its way
+#out, a recording whose id holds an umlaut reaches the agent as bytes that are
+#not UTF-8 and cannot be read as text, and a character Latin-1 does not have
+#comes back as a question mark, so that measurements would be written, and
+#tasks crossed off, under an id that is not the recording's.
+speakUtf8 <- function(db) {
+  return(abdbExecute(db, "SET NAMES utf8mb4;"))
+}
+
 #This agent, as `tasks-agents` names it. That table is PRIMARY KEY (`task`),
 #so a task belongs to one agent and no second R agent can be registered
 #alongside this one: which of abaR's tasks an agent actually does is said by

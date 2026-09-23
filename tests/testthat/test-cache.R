@@ -192,3 +192,23 @@ test_that("a download on Windows is the bytes that were sent, whatever its addre
   expect_true(dl_file(url, path))
   expect_identical(readBin(path, "raw", n=100), sent)
 })
+
+test_that("an id read as Latin-1 is still named, rather than stopping the agent", {
+  #TSA:1091_Rotkopfstärling_Lautfolgen as it came over a connection speaking
+  #Latin-1: the umlaut is one byte, which is not UTF-8
+  latin1 <- rawToChar(as.raw(c(charToRaw("TSA:1091_Rotkopfst"), 0xE4, charToRaw("rling"))))
+  Encoding(latin1) <- "UTF-8"
+  expect_false(validUTF8(latin1))
+
+  name <- safeName(latin1)
+  expect_match(name, "^[A-Za-z0-9._-]+$")
+  expect_identical(name, safeName(latin1))
+  path <- cachePath("/cache", "TSA", latin1, "https://x.org/a.wav")
+  expect_match(basename(path), "^TSA-1091_Rotkopfst-rling-[0-9a-f]{16}[.]wav$")
+})
+
+test_that("an id in UTF-8 is named as it always was", {
+  #A recording already kept under its name must still be found under it
+  utf8 <- "TSA:1091_Rotkopfst\u00e4rling"
+  expect_match(safeName(utf8), "^TSA-1091_Rotkopfst-rling-[0-9a-f]{16}$")
+})

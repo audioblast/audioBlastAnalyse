@@ -113,3 +113,10 @@ test_that("a recording that will not download is recorded as missing at its addr
   expect_identical(written[[1]]$params[[12]], "No file at https://xeno-canto.org/1000001/download")
   expect_length(statementsLike(mocked, "CALL `delete-task`"), 1)
 })
+
+test_that("an agent has its connection speak UTF-8 before it asks for anything", {
+  local_mocked_bindings(pause=function(seconds) NULL)
+  mocked <- mockDB(analyse(aConnection(), mode="local", source="unp"))
+
+  expect_identical(onlyStatement(mocked, 1)$sql, "SET NAMES utf8mb4;")
+})

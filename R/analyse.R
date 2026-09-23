@@ -75,6 +75,8 @@ analyse <- function(
   # the audioBlast database when assigning outstanding analysis tasks to this process.
   process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
 
+  speakUtf8(db)
+
   cont <- TRUE
   empties <- 0
   #How many times each recording has failed to download, by source and id
