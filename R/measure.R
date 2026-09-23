@@ -17,6 +17,13 @@
 noMeasurements <- function(status, error=NA_character_) {
   status <- as.character(status)[1]
   error <- as.character(error)[1]
+  #Under a strict SQL mode a value too long for its column is an error rather
+  #than a truncation, so a long message would fail the write that was recording
+  #it and lose the failure itself. A message is cut to a length any column wide
+  #enough to be worth writing to will take.
+  if (!is.na(error) && nchar(error) > 255) {
+    error <- paste0(substr(error, 1, 252), "...")
+  }
   return(data.frame(
     hash=NA_character_,
     duration=NA_real_,

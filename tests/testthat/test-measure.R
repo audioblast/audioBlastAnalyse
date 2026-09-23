@@ -120,3 +120,17 @@ test_that("a measurement is a number, or nothing", {
   expect_identical(wholeNumber(0), NA_integer_)
   expect_identical(wholeNumber(NA), NA_integer_)
 })
+
+test_that("a message too long for a column is cut rather than failing the write", {
+  #A recording in a deeply nested directory makes a long "No file at" message,
+  #and under a strict SQL mode an over-long value is an error, not a truncation
+  path <- file.path(paste(rep("a-directory", 40), collapse="/"), "recording.wav")
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$status, "missing")
+  expect_lte(nchar(measurements$error), 255)
+  expect_true(endsWith(measurements$error, "..."))
+  #A message that fits is left whole
+  expect_identical(noMeasurements("unreadable", "The file holds no audio")$error,
+                   "The file holds no audio")
+})
