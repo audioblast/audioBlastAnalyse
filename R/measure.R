@@ -103,20 +103,36 @@ codecName <- function(codec) {
   return(sub("(float|_fixed)$", "", as.character(codec)))
 }
 
-#The bits a sample of the file is held in, read from the sample format the
-#decoder gives, or NA where the file has no such thing.
+#The bits a sample of the file is held in, or NA where the file has no such
+#thing or does not say.
 #
 #Only a lossless format has one: a lossy format holds no samples to have a
 #width, and the format its decoder emits (commonly fltp, planar floating point)
-#describes the decoder rather than the recording. A lossless decoder emits the
-#samples the file holds, so its sample format is the file's own.
+#describes the decoder rather than the recording.
+#
+#Nor is a lossless decoder's sample format always the file's own. ffmpeg has
+#no 24-bit sample format, so 24-bit samples are decoded into 32 bits: a 24-bit
+#WAV or FLAC is s32 to its decoder, just as a 32-bit one is. PCM says how wide
+#its samples are in the name of its codec (pcm_s24le, pcm_f32be, pcm_u8), so
+#its depth is read from there. The other lossless formats say it only in their
+#own headers, which av does not give (it has no bits_per_raw_sample), so s32
+#from one of them could be 24 bits or 32 and is left as NA rather than
+#recorded as a guess. Their narrower formats are decoded as they are held, so
+#u8 and s16 are still the file's own.
 bitDepth <- function(codec, sample_fmt) {
-  if (length(sample_fmt) != 1 || is.na(sample_fmt) || is.na(codec)) return(NA_integer_)
-  lossless <- startsWith(codec, "pcm_") || codec %in% c("flac", "alac", "wavpack", "tta")
-  if (!lossless) return(NA_integer_)
+  if (length(codec) != 1 || is.na(codec)) return(NA_integer_)
+  if (startsWith(codec, "pcm_")) {
+    #A-law and mu-law are 8 bits a sample, expanded to 16 when decoded
+    if (codec %in% c("pcm_alaw", "pcm_mulaw")) return(8L)
+    named <- regmatches(codec, regexec("^pcm_[suf]([0-9]+)", codec))[[1]]
+    if (length(named) == 2) return(as.integer(named[2]))
+  } else if (!(codec %in% c("flac", "alac", "wavpack", "tta"))) {
+    return(NA_integer_)
+  }
+  if (length(sample_fmt) != 1 || is.na(sample_fmt)) return(NA_integer_)
   #Planar formats hold each channel apart, and are as wide as the same format
   #interleaved
-  bits <- c(u8=8L, s16=16L, s24=24L, s32=32L, s64=64L)[sub("p$", "", sample_fmt)]
+  bits <- c(u8=8L, s16=16L)[sub("p$", "", sample_fmt)]
   return(unname(bits))
 }
 

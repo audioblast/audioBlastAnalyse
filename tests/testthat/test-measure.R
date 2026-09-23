@@ -93,18 +93,81 @@ test_that("a decoder is named by the format it reads", {
 
 test_that("only a lossless recording has a bit depth", {
   expect_identical(bitDepth("pcm_s16le", "s16"), 16L)
-  expect_identical(bitDepth("pcm_s24le", "s32"), 32L)
   expect_identical(bitDepth("pcm_u8", "u8"), 8L)
   expect_identical(bitDepth("flac", "s16"), 16L)
-  expect_identical(bitDepth("alac", "s32p"), 32L)
+  expect_identical(bitDepth("alac", "s16p"), 16L)
+  expect_identical(bitDepth("wavpack", "u8p"), 8L)
   #A lossy format holds no samples to have a width, whatever its decoder emits
   expect_identical(bitDepth("mp3", "fltp"), NA_integer_)
   expect_identical(bitDepth("mp3", "s16p"), NA_integer_)
   expect_identical(bitDepth("aac", "fltp"), NA_integer_)
   expect_identical(bitDepth("opus", "s16"), NA_integer_)
   expect_identical(bitDepth(NA_character_, "s16"), NA_integer_)
-  expect_identical(bitDepth("pcm_s16le", NA_character_), NA_integer_)
-  expect_identical(bitDepth("pcm_f32le", "flt"), NA_integer_)
+  expect_identical(bitDepth("flac", NA_character_), NA_integer_)
+})
+
+test_that("PCM is as deep as its codec says, not as its decoder emits", {
+  #ffmpeg has no 24-bit sample format, and decodes 24-bit PCM into 32 bits
+  expect_identical(bitDepth("pcm_s24le", "s32"), 24L)
+  expect_identical(bitDepth("pcm_s24be", "s32"), 24L)
+  expect_identical(bitDepth("pcm_u24le", "s32"), 24L)
+  expect_identical(bitDepth("pcm_s32le", "s32"), 32L)
+  expect_identical(bitDepth("pcm_s16be", "s16"), 16L)
+  expect_identical(bitDepth("pcm_s16le_planar", "s16p"), 16L)
+  expect_identical(bitDepth("pcm_s8", "u8"), 8L)
+  expect_identical(bitDepth("pcm_f32le", "flt"), 32L)
+  expect_identical(bitDepth("pcm_f64be", "dbl"), 64L)
+  #A-law and mu-law hold 8 bits a sample, and are decoded into 16
+  expect_identical(bitDepth("pcm_alaw", "s16"), 8L)
+  expect_identical(bitDepth("pcm_mulaw", "s16"), 8L)
+  #The codec says it, so the decoder need not
+  expect_identical(bitDepth("pcm_s16le", NA_character_), 16L)
+  #PCM that does not name its width is as wide as it is decoded, where that
+  #cannot be wider than the file
+  expect_identical(bitDepth("pcm_dvd", "s16"), 16L)
+  expect_identical(bitDepth("pcm_bluray", "s32"), NA_integer_)
+})
+
+test_that("a lossless format decoded into 32 bits has no bit depth said", {
+  #24 bits and 32 are both s32 to the decoder, and av gives nothing else that
+  #would tell them apart, so neither is recorded as a guess
+  expect_identical(bitDepth("flac", "s32"), NA_integer_)
+  expect_identical(bitDepth("alac", "s32p"), NA_integer_)
+  expect_identical(bitDepth("wavpack", "s32p"), NA_integer_)
+  expect_identical(bitDepth("tta", "s32"), NA_integer_)
+})
+
+test_that("a 24-bit WAV is measured as 24 bits", {
+  path <- aWave(samp.rate=96000, bit=24, stereo=FALSE)
+  on.exit(unlink(path))
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$status, "ok")
+  expect_identical(measurements$codec, "pcm_s24le")
+  expect_identical(measurements$bit_depth, 24L)
+  expect_identical(measurements$bit_rate, 96000L * 24L)
+})
+
+test_that("a 24-bit FLAC is measured, but has no bit depth", {
+  #Should av come to say how many bits a sample is held in, this is the test
+  #that will say that FLAC can be measured after all
+  path <- aFlac(bits=24)
+  on.exit(unlink(path))
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$status, "ok")
+  expect_identical(measurements$codec, "flac")
+  expect_identical(av::av_media_info(path)$audio$sample_fmt, "s32")
+  expect_identical(measurements$bit_depth, NA_integer_)
+})
+
+test_that("a 16-bit FLAC is measured as 16 bits", {
+  path <- aFlac(bits=16)
+  on.exit(unlink(path))
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$status, "ok")
+  expect_identical(measurements$bit_depth, 16L)
 })
 
 test_that("a measurement is a number, or nothing", {
