@@ -64,3 +64,68 @@ aFlac <- function(bits=24, samples=4096, samp.rate=48000) {
   writeBin(c(charToRaw("fLaC"), as.raw(c(0x80, 0, 0, 34)), streaminfo, frame), path)
   return(path)
 }
+
+#A 16-bit WAV of a tone converted by av into the format an extension names,
+#or a skipped test where av cannot write it. av's encoders take the first
+#sample format they are able to, which is not always 16 bits: WavPack and TTA
+#are written as 8.
+aConverted <- function(ext) {
+  wav <- aWave()
+  on.exit(unlink(wav))
+  path <- tempfile(fileext=ext)
+  written <- tryCatch({av::av_audio_convert(wav, path, verbose=FALSE); file.exists(path)},
+                      error=function(e) FALSE)
+  testthat::skip_if_not(written, paste("av cannot write", ext))
+  return(path)
+}
+
+#Overwrites bytes of a file, the first of them at the given place (counting
+#from 1), so that a test can make a header say what it needs it to
+withBytes <- function(path, at, bytes) {
+  contents <- readBin(path, "raw", n=file.size(path))
+  contents[at:(at + length(bytes) - 1)] <- as.raw(bytes)
+  writeBin(contents, path)
+  return(invisible(path))
+}
+
+#Where the given text first is in a file, counting from 1
+whereIs <- function(path, text) {
+  return(grepRaw(text, readBin(path, "raw", n=file.size(path)), fixed=TRUE)[1])
+}
+
+#An ALAC magic cookie: an alac atom of its version and flags, then the
+#configuration, whose sixth byte is the bit depth
+alacCookie <- function(bits) {
+  config <- as.raw(c(0, 0, 16, 0, 0, bits, 40, 10, 14, 1, 0, 255, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 187, 128))
+  return(c(as.raw(c(0, 0, 0, 36)), charToRaw("alac"), raw(4), config))
+}
+
+#The header of an M4A file of ALAC, which is all of it that a test reads: an
+#ftyp atom, and a moov atom in which the cookie is inside an alac sample entry
+#of its own, as it is in stsd
+anAlacM4a <- function(bits=24) {
+  bigEndian4 <- function(x) as.raw((x %/% 256^(3:0)) %% 256)
+  entry <- c(raw(28), alacCookie(bits))
+  entry <- c(bigEndian4(length(entry) + 8), charToRaw("alac"), entry)
+  moov <- c(bigEndian4(length(entry) + 8), charToRaw("moov"), entry)
+  ftyp <- c(bigEndian4(16), charToRaw("ftypM4A "), raw(4))
+  path <- tempfile(fileext=".m4a")
+  writeBin(c(ftyp, moov), path)
+  return(path)
+}
+
+#The header of a CAF file of ALAC: a desc chunk, then a kuki chunk holding the
+#configuration itself, or wrapped in an alac atom, then data of unknown length
+aCafOfAlac <- function(bits=24, wrapped=FALSE) {
+  chunk <- function(type, contents) {
+    c(charToRaw(type), as.raw(c(0, 0, 0, 0, (length(contents) %/% 256^(3:0)) %% 256)), contents)
+  }
+  cookie <- alacCookie(bits)
+  if (!wrapped) cookie <- cookie[13:36]
+  path <- tempfile(fileext=".caf")
+  writeBin(c(charToRaw("caff"), as.raw(c(0, 1, 0, 0)),
+             chunk("desc", raw(32)), chunk("kuki", cookie),
+             charToRaw("data"), as.raw(rep(255, 8))), path)
+  return(path)
+}

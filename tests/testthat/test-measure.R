@@ -91,19 +91,21 @@ test_that("a decoder is named by the format it reads", {
   expect_identical(codecName(""), NA_character_)
 })
 
-test_that("only a lossless recording has a bit depth", {
+test_that("only PCM has a bit depth without its file being read", {
   expect_identical(bitDepth("pcm_s16le", "s16"), 16L)
   expect_identical(bitDepth("pcm_u8", "u8"), 8L)
-  expect_identical(bitDepth("flac", "s16"), 16L)
-  expect_identical(bitDepth("alac", "s16p"), 16L)
-  expect_identical(bitDepth("wavpack", "u8p"), 8L)
   #A lossy format holds no samples to have a width, whatever its decoder emits
   expect_identical(bitDepth("mp3", "fltp"), NA_integer_)
   expect_identical(bitDepth("mp3", "s16p"), NA_integer_)
   expect_identical(bitDepth("aac", "fltp"), NA_integer_)
   expect_identical(bitDepth("opus", "s16"), NA_integer_)
   expect_identical(bitDepth(NA_character_, "s16"), NA_integer_)
-  expect_identical(bitDepth("flac", NA_character_), NA_integer_)
+  #Other lossless decoders widen what they are given, so what they emit is
+  #not the file's: 8-bit WavPack and FLAC are both s16 to their decoders
+  expect_identical(bitDepth("flac", "s16"), NA_integer_)
+  expect_identical(bitDepth("wavpack", "s16p"), NA_integer_)
+  expect_identical(bitDepth("alac", "s32p"), NA_integer_)
+  expect_identical(bitDepth("tta", "s32"), NA_integer_)
 })
 
 test_that("PCM is as deep as its codec says, not as its decoder emits", {
@@ -128,15 +130,6 @@ test_that("PCM is as deep as its codec says, not as its decoder emits", {
   expect_identical(bitDepth("pcm_bluray", "s32"), NA_integer_)
 })
 
-test_that("a lossless format decoded into 32 bits has no bit depth said", {
-  #24 bits and 32 are both s32 to the decoder, and av gives nothing else that
-  #would tell them apart, so neither is recorded as a guess
-  expect_identical(bitDepth("flac", "s32"), NA_integer_)
-  expect_identical(bitDepth("alac", "s32p"), NA_integer_)
-  expect_identical(bitDepth("wavpack", "s32p"), NA_integer_)
-  expect_identical(bitDepth("tta", "s32"), NA_integer_)
-})
-
 test_that("a 24-bit WAV is measured as 24 bits", {
   path <- aWave(samp.rate=96000, bit=24, stereo=FALSE)
   on.exit(unlink(path))
@@ -146,6 +139,42 @@ test_that("a 24-bit WAV is measured as 24 bits", {
   expect_identical(measurements$codec, "pcm_s24le")
   expect_identical(measurements$bit_depth, 24L)
   expect_identical(measurements$bit_rate, 96000L * 24L)
+})
+
+test_that("a WAV of 20-bit samples held in 24 bits is measured as 20", {
+  path <- aWave(bit=24)
+  on.exit(unlink(path))
+  #WAVE_FORMAT_EXTENSIBLE says how many bits of each sample are valid, in the
+  #19th and 20th bytes of the fmt chunk
+  fmt <- whereIs(path, "fmt ") + 8
+  expect_identical(littleEndian(readBin(path, "raw", n=fmt + 1)[fmt:(fmt + 1)]), 0xFFFE)
+  withBytes(path, fmt + 18, c(20, 0))
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$codec, "pcm_s24le")
+  expect_identical(measurements$bit_depth, 20L)
+})
+
+test_that("PCM is never deeper than its codec says, whatever its header does", {
+  path <- aWave(bit=24)
+  on.exit(unlink(path))
+  withBytes(path, whereIs(path, "fmt ") + 8 + 18, c(32, 0))
+
+  #ffmpeg would take this file for 32-bit PCM itself, so the rule is asked of
+  #directly, for a decoder that took the file for what it is
+  expect_identical(wavBitDepth(path), 32L)
+  expect_identical(fileBitDepth(path, "pcm_s24le", "s32"), 24L)
+})
+
+test_that("an AIFF is as deep as its COMM chunk says", {
+  path <- aConverted(".aiff")
+  on.exit(unlink(path))
+  expect_identical(measureFile(path)$bit_depth, 16L)
+  #The sample size is the 7th and 8th bytes of COMM, most significant first
+  withBytes(path, whereIs(path, "COMM") + 8 + 6, c(0, 12))
+
+  expect_identical(aiffBitDepth(path), 12L)
+  expect_identical(measureFile(path)$bit_depth, 12L)
 })
 
 test_that("a 24-bit FLAC is measured as 24 bits, from its STREAMINFO", {
@@ -158,6 +187,24 @@ test_that("a 24-bit FLAC is measured as 24 bits, from its STREAMINFO", {
   #Its decoder cannot say, so the file must be read for it
   expect_identical(av::av_media_info(path)$audio$sample_fmt, "s32")
   expect_identical(measurements$bit_depth, 24L)
+})
+
+test_that("a 16-bit FLAC is measured as 16 bits", {
+  path <- aFlac(bits=16)
+  on.exit(unlink(path))
+  measurements <- measureFile(path)
+
+  expect_identical(measurements$status, "ok")
+  expect_identical(measurements$bit_depth, 16L)
+})
+
+test_that("an 8-bit FLAC is measured as 8 bits, not as its decoder emits", {
+  path <- aFlac(bits=8)
+  on.exit(unlink(path))
+  measurements <- measureFile(path)
+
+  expect_identical(av::av_media_info(path)$audio$sample_fmt, "s16")
+  expect_identical(measurements$bit_depth, 8L)
 })
 
 test_that("a FLAC behind an ID3 tag is read past it", {
@@ -178,36 +225,95 @@ test_that("STREAMINFO is read for widths no decoder format has", {
   on.exit(unlink(path))
   #Bits per sample less one, 23, becomes 19: the header of a 20-bit file
   bytes <- readBin(path, "raw", n=file.size(path))
-  bytes[22] <- as.raw(bitwOr(bitwAnd(as.integer(bytes[22]), 0x0F), 0x30))
-  writeBin(bytes, path)
+  withBytes(path, 22, bitwOr(bitwAnd(as.integer(bytes[22]), 0x0F), 0x30))
 
   expect_identical(flacBitDepth(path), 20L)
 })
 
-test_that("a file that does not begin as FLAC has no STREAMINFO to read", {
-  wav <- aWave()
-  notAudio <- aFile()
-  empty <- aFile("")
-  on.exit(unlink(c(wav, notAudio, empty)))
+test_that("FLAC in Ogg is read for its STREAMINFO too", {
+  path <- aConverted(".oga")
+  on.exit(unlink(path))
+  expect_identical(av::av_media_info(path)$audio$codec, "flac")
+  expect_identical(measureFile(path)$bit_depth, 16L)
+  #The bits per sample less one are the last bit of the 13th byte of
+  #STREAMINFO, which follows fLaC and a block header, and the first four of
+  #the 14th: 15 (0 1111) becomes 23 (1 0111)
+  at <- whereIs(path, "fLaC") + 8 + 12
+  bytes <- as.integer(readBin(path, "raw", n=at + 1)[at:(at + 1)])
+  withBytes(path, at, c(bitwOr(bytes[1], 0x01), bitwOr(bitwAnd(bytes[2], 0x0F), 0x70)))
 
-  expect_identical(flacBitDepth(wav), NA_integer_)
-  expect_identical(flacBitDepth(notAudio), NA_integer_)
-  expect_identical(flacBitDepth(empty), NA_integer_)
-  #Bytes that begin with nothing at all are not text to be read as a name
-  zeros <- tempfile()
-  on.exit(unlink(zeros), add=TRUE)
-  writeBin(raw(64), zeros)
-  expect_identical(flacBitDepth(zeros), NA_integer_)
-  expect_identical(flacBitDepth(file.path(tempdir(), "no-such-recording.flac")), NA_integer_)
+  expect_identical(flacBitDepth(path), 24L)
 })
 
-test_that("a 16-bit FLAC is measured as 16 bits", {
-  path <- aFlac(bits=16)
+test_that("WavPack is as deep as its block header says, not as its decoder emits", {
+  path <- aConverted(".wv")
   on.exit(unlink(path))
   measurements <- measureFile(path)
 
-  expect_identical(measurements$status, "ok")
-  expect_identical(measurements$bit_depth, 16L)
+  #av writes WavPack as 8 bits, which its decoder emits as s16p
+  expect_identical(measurements$codec, "wavpack")
+  expect_identical(av::av_media_info(path)$audio$sample_fmt, "s16p")
+  expect_identical(measurements$bit_depth, 8L)
+
+  #Flags are the 25th to 28th bytes: the bytes a sample is stored in, less one,
+  #in their lowest two bits, and how far they are shifted in bits 13 to 17
+  flags <- littleEndian(readBin(path, "raw", n=28)[25:28])
+  setFlags <- function(value) withBytes(path, 25, (value %/% 256^(0:3)) %% 256)
+  unshifted <- flags - flags %% 4 - ((flags %/% 2^13) %% 32) * 2^13
+  setFlags(unshifted + 2)
+  expect_identical(wavpackBitDepth(path), 24L)
+  setFlags(unshifted + 2 + 4 * 2^13)
+  expect_identical(wavpackBitDepth(path), 20L)
+  #DSD is one bit a sample
+  setFlags(unshifted + 2^31)
+  expect_identical(wavpackBitDepth(path), 1L)
+})
+
+test_that("TTA is as deep as its header says", {
+  path <- aConverted(".tta")
+  on.exit(unlink(path))
+  #av writes TTA as 8 bits
+  expect_identical(measureFile(path)$bit_depth, 8L)
+  withBytes(path, 9, c(24, 0))
+
+  expect_identical(ttaBitDepth(path), 24L)
+})
+
+test_that("ALAC is as deep as its magic cookie says, in M4A or CAF", {
+  m4a <- anAlacM4a(bits=24)
+  caf <- aCafOfAlac(bits=20)
+  wrapped <- aCafOfAlac(bits=24, wrapped=TRUE)
+  on.exit(unlink(c(m4a, caf, wrapped)))
+
+  #The sample entry is named alac too, and is not taken for the cookie
+  expect_identical(alacBitDepth(m4a), 24L)
+  expect_identical(alacBitDepth(caf), 20L)
+  expect_identical(alacBitDepth(wrapped), 24L)
+})
+
+test_that("a lossless format whose header cannot be read has no bit depth", {
+  wav <- aWave()
+  notAudio <- aFile()
+  empty <- aFile("")
+  zeros <- tempfile()
+  writeBin(raw(64), zeros)
+  on.exit(unlink(c(wav, notAudio, empty, zeros)))
+  missing <- file.path(tempdir(), "no-such-recording.flac")
+
+  for (path in list(wav, notAudio, empty, zeros, missing)) {
+    expect_identical(flacBitDepth(path), NA_integer_)
+    expect_identical(alacBitDepth(path), NA_integer_)
+    expect_identical(wavpackBitDepth(path), NA_integer_)
+    expect_identical(ttaBitDepth(path), NA_integer_)
+    #FLAC in a container not read, such as Matroska, is not guessed at
+    expect_identical(fileBitDepth(path, "flac", "s32"), NA_integer_)
+  }
+  expect_identical(wavBitDepth(notAudio), NA_integer_)
+  expect_identical(aiffBitDepth(wav), NA_integer_)
+  #PCM needs no header, as its codec says how wide it is
+  expect_identical(fileBitDepth(notAudio, "pcm_s24le", "s32"), 24L)
+  #A lossy file is not read for one at all
+  expect_identical(fileBitDepth(wav, "mp3", "fltp"), NA_integer_)
 })
 
 test_that("a measurement is a number, or nothing", {
