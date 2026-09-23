@@ -148,17 +148,57 @@ test_that("a 24-bit WAV is measured as 24 bits", {
   expect_identical(measurements$bit_rate, 96000L * 24L)
 })
 
-test_that("a 24-bit FLAC is measured, but has no bit depth", {
-  #Should av come to say how many bits a sample is held in, this is the test
-  #that will say that FLAC can be measured after all
+test_that("a 24-bit FLAC is measured as 24 bits, from its STREAMINFO", {
   path <- aFlac(bits=24)
   on.exit(unlink(path))
   measurements <- measureFile(path)
 
   expect_identical(measurements$status, "ok")
   expect_identical(measurements$codec, "flac")
+  #Its decoder cannot say, so the file must be read for it
   expect_identical(av::av_media_info(path)$audio$sample_fmt, "s32")
-  expect_identical(measurements$bit_depth, NA_integer_)
+  expect_identical(measurements$bit_depth, 24L)
+})
+
+test_that("a FLAC behind an ID3 tag is read past it", {
+  flac <- aFlac(bits=24)
+  path <- tempfile(fileext=".flac")
+  on.exit(unlink(c(flac, path)))
+  #An ID3v2.4 tag of one title frame, and a size in seven-bit bytes
+  frame <- c(charToRaw("TIT2"), as.raw(c(0, 0, 0, 5, 0, 0, 3)), charToRaw("Song"))
+  tag <- c(charToRaw("ID3"), as.raw(c(4, 0, 0, 0, 0, 0, length(frame))), frame)
+  writeBin(c(tag, readBin(flac, "raw", n=file.size(flac))), path)
+
+  expect_identical(flacBitDepth(path), 24L)
+  expect_identical(measureFile(path)$bit_depth, 24L)
+})
+
+test_that("STREAMINFO is read for widths no decoder format has", {
+  path <- aFlac(bits=24)
+  on.exit(unlink(path))
+  #Bits per sample less one, 23, becomes 19: the header of a 20-bit file
+  bytes <- readBin(path, "raw", n=file.size(path))
+  bytes[22] <- as.raw(bitwOr(bitwAnd(as.integer(bytes[22]), 0x0F), 0x30))
+  writeBin(bytes, path)
+
+  expect_identical(flacBitDepth(path), 20L)
+})
+
+test_that("a file that does not begin as FLAC has no STREAMINFO to read", {
+  wav <- aWave()
+  notAudio <- aFile()
+  empty <- aFile("")
+  on.exit(unlink(c(wav, notAudio, empty)))
+
+  expect_identical(flacBitDepth(wav), NA_integer_)
+  expect_identical(flacBitDepth(notAudio), NA_integer_)
+  expect_identical(flacBitDepth(empty), NA_integer_)
+  #Bytes that begin with nothing at all are not text to be read as a name
+  zeros <- tempfile()
+  on.exit(unlink(zeros), add=TRUE)
+  writeBin(raw(64), zeros)
+  expect_identical(flacBitDepth(zeros), NA_integer_)
+  expect_identical(flacBitDepth(file.path(tempdir(), "no-such-recording.flac")), NA_integer_)
 })
 
 test_that("a 16-bit FLAC is measured as 16 bits", {

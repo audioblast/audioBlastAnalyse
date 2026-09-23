@@ -79,6 +79,10 @@ measureFile <- function(path) {
   measurements$bit_rate <- wholeNumber(audio$bitrate[1])
   measurements$codec <- codecName(audio$codec[1])
   measurements$bit_depth <- bitDepth(measurements$codec, audio$sample_fmt[1])
+  if (identical(measurements$codec, "flac")) {
+    said <- flacBitDepth(path)
+    if (!is.na(said)) measurements$bit_depth <- said
+  }
   measurements$duration <- positiveNumber(info$duration)
 
   #A container that cannot say how long it is cannot be analysed in chunks, so
@@ -118,7 +122,8 @@ codecName <- function(codec) {
 #own headers, which av does not give (it has no bits_per_raw_sample), so s32
 #from one of them could be 24 bits or 32 and is left as NA rather than
 #recorded as a guess. Their narrower formats are decoded as they are held, so
-#u8 and s16 are still the file's own.
+#u8 and s16 are still the file's own. FLAC's header is read by measureFile()
+#itself (see flacBitDepth()), and what it says is taken over this.
 bitDepth <- function(codec, sample_fmt) {
   if (length(codec) != 1 || is.na(codec)) return(NA_integer_)
   if (startsWith(codec, "pcm_")) {
@@ -134,6 +139,43 @@ bitDepth <- function(codec, sample_fmt) {
   #interleaved
   bits <- c(u8=8L, s16=16L)[sub("p$", "", sample_fmt)]
   return(unname(bits))
+}
+
+#The bits a sample of a FLAC file is held in, as its STREAMINFO says, or NA
+#where the file does not begin as a FLAC file does.
+#
+#The depth a FLAC file was encoded at is in its own header, and nowhere av
+#gives it: its decoder emits s32 for anything wider than 16 bits (see
+#bitDepth()). STREAMINFO is always the first block, so this is a read of a few
+#dozen bytes, past an ID3v2 tag where one has been put in front. FLAC held in
+#another container, such as Ogg or Matroska, does not begin with fLaC, and is
+#left to what its decoder says.
+flacBitDepth <- function(path) {
+  header <- tryCatch(suppressWarnings(readBin(path, "raw", n=10)), error=function(e) raw(0))
+  skip <- 0
+  if (length(header) == 10 && identical(header[1:3], charToRaw("ID3"))) {
+    #The size of an ID3v2 tag is in four bytes of seven bits each, and leaves
+    #out its own header and footer
+    size <- sum(bitwAnd(as.integer(header[7:10]), 0x7F) * 128^(3:0))
+    footer <- bitwAnd(as.integer(header[6]), 0x10) != 0
+    skip <- 10 + size + if (footer) 10 else 0
+  }
+  connection <- tryCatch(suppressWarnings(file(path, "rb")), error=function(e) NULL)
+  if (is.null(connection)) return(NA_integer_)
+  on.exit(close(connection))
+  bytes <- tryCatch({
+    if (skip > 0) seek(connection, skip)
+    readBin(connection, "raw", n=42)
+  }, error=function(e) raw(0))
+  #fLaC, then the header of a STREAMINFO block (type 0, 34 bytes long)
+  if (length(bytes) < 42 || !identical(bytes[1:4], charToRaw("fLaC"))) return(NA_integer_)
+  if (bitwAnd(as.integer(bytes[5]), 0x7F) != 0) return(NA_integer_)
+  #Bits per sample, less one, are the five bits that follow the sample rate
+  #and number of channels: the last bit of the 13th byte of STREAMINFO and
+  #the first four of the 14th
+  streaminfo <- as.integer(bytes[9:42])
+  bits <- bitwAnd(streaminfo[13], 0x01) * 16 + bitwShiftR(streaminfo[14], 4) + 1
+  return(as.integer(bits))
 }
 
 #A number greater than zero, or NA for anything else, as a recording of no
