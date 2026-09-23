@@ -11,7 +11,11 @@ dl_file <- function(file, tmp) {
     timeout <- getOption('timeout')
     on.exit(options(timeout=timeout))
     options(timeout=0)
-    status <- tryCatch(download.file(file, destfile=tmp, method="libcurl"),
+    #mode="wb" always. download.file() writes in text mode unless the address
+    #ends in an extension it knows to be binary, and on Windows text mode puts
+    #a carriage return before every line feed: an address with no extension,
+    #as OSF's have, came down 0.4% longer and unreadable.
+    status <- tryCatch(download.file(file, destfile=tmp, method="libcurl", mode="wb"),
                        error=function(e) -1)
     return(identical(as.integer(status), 0L))
   }

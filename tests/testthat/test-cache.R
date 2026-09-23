@@ -176,3 +176,19 @@ test_that("an address with no extension is named by its MIME type", {
   expect_identical(cachePath("/cache", "xc", "1", "https://x.org/1/download"),
                    file.path("/cache", "xc", "1"))
 })
+
+test_that("a download on Windows is the bytes that were sent, whatever its address", {
+  #Only Windows downloads with download.file(), and only there does text mode
+  #change what is written
+  skip_if_not(.Platform$OS.type == "windows", "download.file() is used only on Windows")
+  #Bytes an MP3 is full of, with nothing in the address to say it is binary
+  sent <- as.raw(c(0xFF, 0xFB, 0x0A, 0x00, 0x0D, 0x0A, 0x0A, 0x41, 0x0A))
+  source <- tempfile("s")
+  writeBin(sent, source)
+  path <- tempfile(fileext=".part")
+  on.exit(unlink(c(source, path)))
+  url <- paste0("file:///", gsub("\\\\", "/", normalizePath(source)))
+
+  expect_true(dl_file(url, path))
+  expect_identical(readBin(path, "raw", n=100), sent)
+})
