@@ -1,4 +1,5 @@
-#The file a recording is held in, ready to be read.
+#The file a recording is held in, ready to be read, or NA where it could not be
+#downloaded whole.
 #
 #A recording that has been downloaded is kept, named for the recording it holds
 #rather than for the address it came from, so that an agent meeting the
@@ -7,8 +8,8 @@
 #more than every analysis made of it, and a source is not to be asked twice for
 #what it has already given.
 #' @importFrom tools file_ext
-webFile <- function(url, source, id, dir="", verbose=FALSE) {
-  path <- cachePath(dir, source, id, url)
+webFile <- function(url, source, id, dir="", verbose=FALSE, type=NA_character_) {
+  path <- cachePath(dir, source, id, url, type)
   if (file.exists(path)) {
     if (verbose) print(paste("Already downloaded:", path))
     return(path)
@@ -22,7 +23,11 @@ webFile <- function(url, source, id, dir="", verbose=FALSE) {
   part <- paste0(path, ".", Sys.getpid(), ".part")
   unlink(part)
   if (verbose) print(paste("Downloading:", url))
-  dl_file(url, part)
+  if (!dl_file(url, part)) {
+    #What there is of it is not the recording, and is neither kept nor read
+    unlink(part)
+    return(NA_character_)
+  }
   if (!file.rename(part, path)) {
     #Renaming fails across file systems, and where another agent has just put
     #the same recording there
@@ -36,9 +41,35 @@ webFile <- function(url, source, id, dir="", verbose=FALSE) {
 #file named for the recording's id within it. The two together name a recording
 #in audioBlast!, so they name its file here. A directory that is not given is
 #the one being worked in.
-cachePath <- function(dir, source, id, file) {
+#
+#The file is given the extension its address ends in, or where it ends in none
+#(xeno-canto's end in /download) the one its MIME type is known by, so that
+#the cache can be read by eye and opened by other programs. Nothing here needs
+#it: ffmpeg reads a file for what it is, whatever it is called.
+cachePath <- function(dir, source, id, file, type=NA_character_) {
   if (!nzchar(dir)) dir <- "."
-  return(file.path(dir, safeName(source), paste0(safeName(id), extension(file))))
+  ext <- extension(file)
+  if (!nzchar(ext)) ext <- mimeExtension(type)
+  return(file.path(dir, safeName(source), paste0(safeName(id), ext)))
+}
+
+#The extension a file of the given MIME type is known by, with the dot, or ""
+#for a type that is not an audio or video format known here. Parameters, such
+#as a codec or a character set, are no part of the type.
+mimeExtension <- function(type) {
+  type <- tolower(trimws(sub(";.*$", "", as.character(type)[1])))
+  if (length(type) == 0 || is.na(type)) return("")
+  extensions <- c(
+    "audio/mpeg"="mp3", "audio/mp3"="mp3", "audio/mpeg3"="mp3", "audio/x-mpeg"="mp3",
+    "audio/wav"="wav", "audio/x-wav"="wav", "audio/wave"="wav", "audio/vnd.wave"="wav",
+    "audio/flac"="flac", "audio/x-flac"="flac",
+    "audio/ogg"="ogg", "application/ogg"="ogg", "audio/opus"="opus",
+    "audio/mp4"="m4a", "audio/x-m4a"="m4a", "audio/m4a"="m4a", "audio/aac"="aac",
+    "audio/aiff"="aiff", "audio/x-aiff"="aiff",
+    "audio/x-wavpack"="wv", "audio/webm"="webm",
+    "video/mp4"="mp4", "video/quicktime"="mov", "video/webm"="webm")
+  if (!(type %in% names(extensions))) return("")
+  return(paste0(".", extensions[[type]]))
 }
 
 #A name that stands for a value in a file system, whatever the value holds.

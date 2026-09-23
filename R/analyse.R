@@ -77,6 +77,8 @@ analyse <- function(
 
   cont <- TRUE
   empties <- 0
+  #How many times each recording has failed to download, by source and id
+  failures <- numeric()
   while (cont) {
     if (debug) {
       # Debug mode is used to debug an individual recording
@@ -95,8 +97,34 @@ analyse <- function(
     # The tasks claimed above are all of one recording, so its file is fetched
     # once and read by each of them. Nothing is fetched when nothing was
     # claimed: there is then no recording to fetch the file of.
+    given_back <- FALSE
     if (mode=="web" && nrow(ss) > 0) {
-      tmp <- webFile(ss[1, "file"], ss[[1, "source"]], ss[[1, "id"]], base_dir, verbose)
+      type <- if ("type" %in% names(ss)) ss[[1, "type"]] else NA_character_
+      tmp <- webFile(ss[1, "file"], ss[[1, "source"]], ss[[1, "id"]], base_dir, verbose, type)
+      if (is.na(tmp)) {
+        recording <- paste(ss[[1, "source"]], ss[[1, "id"]])
+        #A recording being debugged has no claimed tasks to give back
+        if (debug) stop(paste("Could not download", recording))
+        failures[recording] <- if (is.na(failures[recording])) 1 else failures[recording] + 1
+        if (failures[recording] < downloadAttempts()) {
+          #Nothing is known about the recording that was not before, so its
+          #tasks go back to be claimed again, after a wait for whatever went
+          #wrong to come right
+          warning(paste("Could not download", recording, "and gave its tasks back"))
+          for (i in seq_len(nrow(ss))) {
+            releaseToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
+          }
+          ss <- ss[0, , drop=FALSE]
+          given_back <- TRUE
+          pause(spread(10 * failures[recording]))
+        } else {
+          #A recording that cannot be downloaded however often it is asked for
+          #is measured at its address, where there is no file: it is recorded
+          #as missing, with its address in the error, rather than holding the
+          #agent for ever
+          tmp <- ss[1, "file"]
+        }
+      }
     }
 
     if (nrow(ss)>0) {
@@ -115,7 +143,7 @@ analyse <- function(
         }
         doTask(db, task, ss[[i, "source"]], ss[[i, "id"]], tmp, process_id, force, verbose)
       }
-    } else if (!debug) {
+    } else if (!debug && !given_back) {
       #A claim that came back empty is not yet a sign that the work is done:
       #another agent may have won every task this one tried for, or the claim
       #may have failed. So the agent asks again, a while later, and only stops
@@ -152,6 +180,12 @@ emptyClaimWait <- function(empties) {
   waits <- c(1, 5, 15, 30, 60)
   if (empties > length(waits)) return(NA_real_)
   return(waits[empties] * stats::runif(1, 0.5, 1.5))
+}
+
+#How many times an agent tries to download a recording before it records the
+#recording as missing
+downloadAttempts <- function() {
+  return(3)
 }
 
 #Waits, as its own function so that tests need not

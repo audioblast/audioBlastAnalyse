@@ -72,3 +72,44 @@ test_that("the waits after empty claims grow, are spread, and end", {
   #Two agents that collided do not wait exactly as long as each other
   expect_false(identical(emptyClaimWait(3), emptyClaimWait(3)))
 })
+
+#The statements a mocked database was asked to execute that start as given
+statementsLike <- function(mocked, start) {
+  return(Filter(function(s) startsWith(s$sql, start), mocked$executed))
+}
+
+test_that("a recording that did not download has its tasks given back, not measured", {
+  local_mocked_bindings(pause=function(seconds) NULL,
+                        webFile=function(...) NA_character_,
+                        downloadAttempts=function() 3)
+  #One recording is claimed, then nothing more
+  mocked <- expect_warning(
+    mockDB(analyse(aConnection(), mode="web", source="xeno-canto"),
+           rows=list(aClaimedTask("recordings_calculated"), noRows())),
+    "Could not download unp 1 and gave its tasks back")
+
+  expect_length(statementsLike(mocked, "DELETE FROM `tasks-progress`"), 1)
+  #Nothing was written about a file that was never had
+  expect_length(statementsLike(mocked, "INSERT INTO `recordings-calculated`"), 0)
+  expect_length(statementsLike(mocked, "CALL `delete-task`"), 0)
+})
+
+test_that("a recording that will not download is recorded as missing at its address", {
+  local_mocked_bindings(pause=function(seconds) NULL,
+                        webFile=function(...) NA_character_,
+                        downloadAttempts=function() 3)
+  #The same recording is claimed three times, as the first unclaimed one is
+  claim <- aClaimedTask("recordings_calculated")
+  claim$file <- "https://xeno-canto.org/1000001/download"
+  mocked <- suppressWarnings(
+    mockDB(analyse(aConnection(), mode="web", source="xeno-canto"),
+           rows=list(claim, noRows(), claim, noRows(), claim, noRows())))
+
+  #Given back twice, then measured, written and crossed off
+  expect_length(statementsLike(mocked, "DELETE FROM `tasks-progress`"), 2)
+  written <- statementsLike(mocked, "INSERT INTO `recordings-calculated`")
+  expect_length(written, 1)
+  expect_identical(written[[1]]$params[[11]], "missing")
+  expect_identical(written[[1]]$params[[12]], "No file at https://xeno-canto.org/1000001/download")
+  expect_length(statementsLike(mocked, "CALL `delete-task`"), 1)
+})

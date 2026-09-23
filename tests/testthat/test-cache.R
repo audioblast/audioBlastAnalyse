@@ -13,6 +13,7 @@ mockDownloads <- function(code, contents="audio") {
     dl_file=function(file, tmp=NULL) {
       asked[[length(asked) + 1]] <<- list(url=file, path=tmp)
       writeBin(charToRaw(contents), tmp)
+      TRUE
     })
   value <- code
   return(list(value=value, asked=asked))
@@ -91,6 +92,7 @@ test_that("a recording is downloaded beside where it is kept, and moved there wh
       seen <<- c(seen, tmp)
       expect_false(file.exists(cachePath(cache, "unp", "1", file)))
       writeBin(charToRaw("audio"), tmp)
+      TRUE
     })
 
   path <- webFile("https://x.org/a.wav", "unp", "1", cache)
@@ -119,4 +121,58 @@ test_that("a cache says what it is doing when asked", {
                 "Downloading: https://x.org/a.wav")
   expect_output(mockDownloads(webFile("https://x.org/a.wav", "unp", "1", cache, verbose=TRUE)),
                 "Already downloaded:")
+})
+
+test_that("a download that did not finish is neither kept nor read", {
+  cache <- aCache()
+  on.exit(unlink(cache, recursive=TRUE))
+  #A download stopped part way through leaves what it had fetched so far
+  local_mocked_bindings(dl_file=function(file, tmp=NULL) {
+    writeBin(charToRaw("half a recor"), tmp)
+    FALSE
+  })
+
+  expect_identical(webFile("https://x.org/a.wav", "unp", "1", cache), NA_character_)
+  #Nothing is left to be taken for the recording next time, whole or in part
+  expect_length(list.files(cache, recursive=TRUE), 0)
+})
+
+test_that("wget has finished only when it says so, or the server said no", {
+  expect_true(downloadFinished(0))
+  #An error from the server is all there is to be had, and is measured as such
+  expect_true(downloadFinished(8))
+  #A network that failed, a file that could not be written, a wget stopped
+  for (status in list(1, 3, 4, 5, 130, 2, NA, NULL, "x")) {
+    expect_false(downloadFinished(status))
+  }
+})
+
+test_that("wget is asked for the address it was given, into the file it was given", {
+  skip_on_os("windows")
+  asked <- character()
+  local_mocked_bindings(runCommand=function(command) {
+    asked <<- c(asked, command)
+    4L
+  })
+  path <- file.path(tempdir(), "a recording.part")
+  expect_false(dl_file("https://x.org/a b.wav", path))
+  expect_match(asked, "'https://x.org/a b.wav'", fixed=TRUE)
+  expect_match(asked, shQuote(path), fixed=TRUE)
+})
+
+test_that("an address with no extension is named by its MIME type", {
+  expect_identical(cachePath("/cache", "xeno-canto", "10", "https://xeno-canto.org/10/download",
+                             "audio/mpeg"),
+                   file.path("/cache", "xeno-canto", "10.mp3"))
+  expect_identical(mimeExtension("audio/x-wav"), ".wav")
+  expect_identical(mimeExtension("Audio/FLAC; charset=binary"), ".flac")
+  expect_identical(mimeExtension("text/html"), "")
+  expect_identical(mimeExtension(NA_character_), "")
+  expect_identical(mimeExtension(character(0)), "")
+  #The address's own extension is kept where it has one
+  expect_identical(cachePath("/cache", "unp", "1", "https://x.org/a.flac", "audio/x-wav"),
+                   file.path("/cache", "unp", "1.flac"))
+  #And a file of no known type is still named, without one
+  expect_identical(cachePath("/cache", "xc", "1", "https://x.org/1/download"),
+                   file.path("/cache", "xc", "1"))
 })
