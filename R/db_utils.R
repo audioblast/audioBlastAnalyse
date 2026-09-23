@@ -47,56 +47,89 @@ fetchRecordingDebug <- function(db, source, id) {
   return(ss)
 }
 
-fetchDownloadableRecordings <- function(db, source, process_id, legacy=FALSE) {
-  if (legacy==TRUE) {
-    sql <- paste0("SELECT `id` FROM `tasks` WHERE `source` = '",
-                  source,
-                  "' WHERE `task` IN (SELECT `tasks` FROM `tasks-agents` WHERE `agent`= 'abaR') LIMIT 1;")
-    ss <- abdbGetQuery(db, sql)
-    sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
-                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
-                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
-                  "ON `tasks`.`source` = `tasks-progress`.`source` AND `tasks`.`id` = `tasks-progress`.`id` ",
-                  "WHERE `tasks`.`source` = '", source, "' ",
-                  "AND `tasks`.`id` = '", ss[1, "id"], "' ",
-                  "AND `tasks-progress`.`started` IS NULL;")
-    abdbExecute(db, sql)
-    sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = '", process_id, "';")
-    ss <- abdbGetQuery(db, sql)
-    return(ss)
-  }
-  #TODO: Below needs to accommodate agents
-  sql <- paste0("CALL `get-tasks-by-file`(",
-                dbQuoteString(db, process_id), ",",
-                dbQuoteString(db, source), ");")
-  ss <- abdbGetQuery(db, sql)
+#This agent, as `tasks-agents` names it. That table is PRIMARY KEY (`task`),
+#so a task belongs to one agent and no second R agent can be registered
+#alongside this one: which of abaR's tasks an agent actually does is said by
+#asking for them, not by calling itself something else.
+agentName <- function() {
+  return("abaR")
+}
+
+#The kinds of task this agent does. Anything else it were offered would be
+#claimed and given straight back, which is work for the database and none for
+#the agent: of the tasks abaR is registered for, most are soundscapes that
+#doTask() no longer runs.
+tasksDone <- function() {
+  return("recordings_calculated")
+}
+
+#The kinds of task to ask for, written as FIND_IN_SET reads them. It matches
+#the list exactly, so a space after a comma would quietly cost the agent work.
+taskList <- function(tasks) {
+  if (length(tasks) == 0) stop("tasks must name at least one kind of task.")
+  return(paste(gsub(" ", "", tasks), collapse=","))
+}
+
+#No work, in the shape `tasks-data` answers in. A claim that could not be made
+#at all gives this rather than nothing, so that an agent asks again instead of
+#falling over on an answer that is not there.
+noTasks <- function() {
+  return(data.frame(source=character(), id=character(), file=character(),
+                    type=character(), Duration=numeric(), task=character(),
+                    process=character(), stringsAsFactors=FALSE))
+}
+
+#What the database answered, or no work if it could not be asked
+claimed <- function(ss) {
+  if (is.null(ss) || !is.data.frame(ss)) return(noTasks())
   return(ss)
 }
 
-fetchUnanalysedRecordings <- function(db, source, process_id, legacy=FALSE) {
-  #Legacy provides a means of running on NHM HPC
-  if (legacy==FALSE) {
-    sql <- paste0("CALL `get-tasks`(",
-                  dbQuoteString(db, process_id),
-                  ", 10, ",
-                  dbQuoteString(db, source), ");")
-    ss <- abdbGetQuery(db, sql)
-    return(ss)
-  } else {
-    sql <- paste0("INSERT INTO `tasks-progress`(`process`, `started`, `source`, `id`, `task`) ",
-                  "SELECT '", process_id, "', NOW(), `tasks`.`source`, `tasks`.`id`, `tasks`.`task` ",
-                  "FROM `tasks` LEFT JOIN `tasks-progress` ",
-	                "ON `tasks`.`source` = `tasks-progress`.`source` ",
-                  "AND `tasks`.`id` = `tasks-progress`.`id` ",
-                  "WHERE `tasks`.`source` = '", source, "' ",
-                  "AND `tasks`.`task` IN (SELECT `task` FROM `tasks-agents` WHERE `agent`= 'abaR') ",
-                  "AND `tasks-progress`.`started` IS NULL ",
-                  "LIMIT 10;")
-    abdbExecute(db, sql)
-    sql <- paste0("SELECT * FROM `tasks-data` WHERE `process` = '", process_id, "';")
-    ss <- abdbGetQuery(db, sql)
-    return(ss)
-  }
+#Claiming is done by the database and read back by the agent, in two steps
+#rather than one.
+#
+#`claim-tasks` and `claim-tasks-by-file` take the work and answer with nothing;
+#the agent then reads what it was given with a plain SELECT of its own. It is
+#answering with rows that the client build on the NHM HPC cannot be relied on
+#for, not the procedure itself -- which is why `delete-task`, answering with
+#nothing, has always been called there. Splitting it this way means one path
+#for every agent everywhere, and the claim itself stays in the database, where
+#the agents written in other languages use the same one.
+#
+#Claiming is a race the database settles rather than one the agents avoid.
+#`tasks-progress` is unique on (source, id, task), so several agents may try
+#for the same task and only one row survives; INSERT IGNORE lets the losers
+#carry on rather than fail. Each agent then reads back what it actually won,
+#which may be fewer than it asked for, and may be none. Two agents doing one
+#task would be wasteful rather than wrong in any case, since the measurements
+#replace rather than repeat.
+
+#Every outstanding task of one recording, claimed together, so that a recording
+#fetched over the web is downloaded once and measured for all of them.
+fetchDownloadableRecordings <- function(db, source, process_id, tasks=tasksDone()) {
+  abdbExecute(db, "CALL `claim-tasks-by-file`(?, ?, ?, ?);",
+              params=list(as.character(process_id), as.character(source),
+                          agentName(), taskList(tasks)))
+  return(heldBy(db, process_id))
+}
+
+#Tasks to be getting on with, claimed so that no other agent is given them at
+#the same time.
+fetchUnanalysedRecordings <- function(db, source, process_id, tasks=tasksDone(),
+                                      n=10) {
+  abdbExecute(db, "CALL `claim-tasks`(?, ?, ?, ?, ?);",
+              params=list(as.character(process_id), as.integer(n),
+                          as.character(source), agentName(), taskList(tasks)))
+  return(heldBy(db, process_id))
+}
+
+#What this agent came away with. A plain SELECT, so that it does not matter
+#what the client library was built against.
+heldBy <- function(db, process_id) {
+  return(claimed(abdbGetQuery(
+    db,
+    "SELECT * FROM `tasks-data` WHERE `process` = ?;",
+    params=list(as.character(process_id)))))
 }
 
 #Crosses a task off: it has been done, and nobody need do it again.

@@ -4,7 +4,10 @@
 #' environment.
 #'
 #' @param db database connector
-#' @param db_legacy If TRUE allows use with RMariaDB connectors that have issues with stored procedures
+#' @param db_legacy Deprecated, and does nothing. Claiming no longer needs a
+#'   second path: the database is asked to claim with a routine that answers
+#'   with nothing, and the agent reads what it was given itself, which works
+#'   whatever the client library was built against.
 #' @param mode "web" for online files, or "local" for local files
 #' @param source Specify source to analyse
 #' @param debug If TRUE and used with id and task then allows for debugging a single recording
@@ -17,6 +20,12 @@
 #'   downloaded recording is kept under the source and id it is held by, so
 #'   that it is fetched once however many times it is analysed, and however
 #'   many agents analyse it on one machine.
+#' @param tasks The kinds of task to ask for. An agent is only offered these,
+#'   rather than everything abaR is registered for, so that it does not claim
+#'   work it would only give straight back. Defaults to what doTask() does.
+#' @param n How many tasks to claim at a time. A task is given back by itself
+#'   if the agent stops, so this can be raised: finishing any one task tells
+#'   the database the agent is still alive and holding the rest.
 #' @importFrom tools file_ext
 #' @importFrom cli hash_sha256
 #' @export
@@ -30,12 +39,18 @@ analyse <- function(
     task=NULL,
     verbose=FALSE,
     force=FALSE,
-    base_dir=""
+    base_dir="",
+    tasks=tasksDone(),
+    n=10
     ) {
 
   # Parameters check
   if (!inherits(db, "MariaDBConnection")) stop("db is not a MariaDBConnection.")
   if (!is.logical(db_legacy)) stop("db_legacy must be logical.")
+  if (isTRUE(db_legacy)) {
+    warning(paste("db_legacy is deprecated and does nothing: claiming now works",
+                  "the same way everywhere. It can be dropped from the call."))
+  }
   if (!(mode %in% c("local", "web"))) stop("mode must be one of: web, local.")
   if (!is.character(source)) stop("source must be a character vector.")
   if (!is.logical(debug)) stop("debug must be logical.")
@@ -52,6 +67,9 @@ analyse <- function(
   if (!is.logical(verbose)) stop("verbose must be logical.")
   if (!is.logical(force)) stop("force must be logical.")
   if (!is.character(base_dir)) stop("base_dir must be a character vector.")
+  if (!is.character(tasks)) stop("tasks must be a character vector.")
+  if (length(tasks) == 0) stop("tasks must name at least one kind of task.")
+  if (!is.numeric(n) || length(n) != 1 || n < 1) stop("n must be a number of tasks, and at least 1.")
 
   # Generate a unique process_id. This is used to identify this analysis process to
   # the audioBlast database when assigning outstanding analysis tasks to this process.
@@ -68,10 +86,10 @@ analyse <- function(
       # in base_dir so that a recording is only ever downloaded once. For a
       # recording with 1 or more outstanding tasks, get all outstanding tasks
       # for that recording.
-      ss <- fetchDownloadableRecordings(db, source, process_id, legacy=db_legacy)
+      ss <- fetchDownloadableRecordings(db, source, process_id, tasks=tasks)
     } else {
-      # Files for analysis are mounted locally: fetch 10 outstanding tasks
-      ss <- fetchUnanalysedRecordings(db, source, process_id, legacy=db_legacy)
+      # Files for analysis are mounted locally
+      ss <- fetchUnanalysedRecordings(db, source, process_id, tasks=tasks, n=n)
     }
     # The tasks claimed above are all of one recording, so its file is fetched
     # once and read by each of them. Nothing is fetched when nothing was

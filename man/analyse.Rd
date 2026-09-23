@@ -14,13 +14,18 @@ analyse(
   task = NULL,
   verbose = FALSE,
   force = FALSE,
-  base_dir = ""
+  base_dir = "",
+  tasks = tasksDone(),
+  n = 10
 )
 }
 \arguments{
 \item{db}{database connector}
 
-\item{db_legacy}{If TRUE allows use with RMariaDB connectors that have issues with stored procedures}
+\item{db_legacy}{Deprecated, and does nothing. Claiming no longer needs a
+second path: the database is asked to claim with a routine that answers
+with nothing, and the agent reads what it was given itself, which works
+whatever the client library was built against.}
 
 \item{mode}{"web" for online files, or "local" for local files}
 
@@ -41,6 +46,14 @@ paths are located in, and the one downloaded files are kept in. A
 downloaded recording is kept under the source and id it is held by, so
 that it is fetched once however many times it is analysed, and however
 many agents analyse it on one machine.}
+
+\item{tasks}{The kinds of task to ask for. An agent is only offered these,
+rather than everything abaR is registered for, so that it does not claim
+work it would only give straight back. Defaults to what doTask() does.}
+
+\item{n}{How many tasks to claim at a time. A task is given back by itself
+if the agent stops, so this can be raised: finishing any one task tells
+the database the agent is still alive and holding the rest.}
 }
 \description{
 This is the main function for analysing recordings from audioBlast in the R
