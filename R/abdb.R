@@ -2,6 +2,21 @@ backoff <- function() {
   return(c(1,1,2,3,5,10,30,60))
 }
 
+#A wait spread at random about the one given. Agents that deadlock on one
+#another are rolled back together, and waiting exactly as long as each other
+#would have them meet again when they retry.
+spread <- function(seconds) {
+  return(seconds * stats::runif(1, 0.5, 1.5))
+}
+
+#A statement as it is named in a message: the routine it calls, or its first
+#words, rather than all of it
+statementName <- function(query) {
+  words <- strsplit(trimws(gsub("\\s+", " ", query)), " ")[[1]]
+  if (length(words) >= 2 && toupper(words[1]) == "CALL") return(sub("\\(.*", "", words[2]))
+  return(paste(utils::head(words, 4), collapse=" "))
+}
+
 #A statement, retried behind the backoff above while the database refuses it,
 #as an agent that loses its connection should wait for it rather than lose the
 #work it has done. Values are bound rather than written into the statement, so
@@ -15,15 +30,16 @@ abdbExecute <- function(db, query, params=NULL) {
       if (is.null(params)) dbExecute(db, query) else dbExecute(db, query, params=params)
     },
     error=function(cond) {
-      print("Error:")
+      print(paste("Error in", statementName(query)))
       print(cond)
       -1
     })
     if (!is.na(ret) && ret >= 0) {
       return(invisible(TRUE))
     }
-    print(paste("Sleep:", i))
-    Sys.sleep(i)
+    wait <- spread(i)
+    print(paste("Sleep:", round(wait, 1)))
+    pause(wait)
   }
   warning(paste("Gave up on a statement after", length(backoff()), "attempts:", query))
   return(invisible(FALSE))
@@ -41,15 +57,16 @@ abdbGetQuery <- function(db, query, params=NULL) {
       if (is.null(params)) dbGetQuery(db, query) else dbGetQuery(db, query, params=params)
     },
     error=function(cond) {
-      print("Error:")
+      print(paste("Error in", statementName(query)))
       print(cond)
       failed
     })
     if (!identical(ret, failed)) {
       return(ret)
     }
-    print(paste("Sleep:", i))
-    Sys.sleep(i)
+    wait <- spread(i)
+    print(paste("Sleep:", round(wait, 1)))
+    pause(wait)
   }
   warning(paste("Gave up on a query after", length(backoff()), "attempts:", query))
   return(NULL)

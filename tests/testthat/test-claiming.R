@@ -113,3 +113,17 @@ test_that("work claimed is work handed back", {
   expect_identical(nrow(mocked$value), 1L)
   expect_identical(mocked$value[1, "task"], "recordings_calculated")
 })
+
+test_that("a statement that fails is named by what it calls, not printed whole", {
+  expect_identical(statementName("CALL `claim-tasks-by-file`(?, ?, ?, ?);"), "`claim-tasks-by-file`")
+  expect_identical(statementName("  DELETE FROM `tasks-progress`\n  WHERE `process` = ?;"),
+                   "DELETE FROM `tasks-progress` WHERE")
+})
+
+test_that("retries are spread about their backoff", {
+  set.seed(1)
+  spreads <- vapply(rep(10, 20), spread, numeric(1))
+  expect_true(all(spreads >= 5 & spreads <= 15))
+  expect_gt(length(unique(spreads)), 1)
+  expect_identical(spread(0), 0)
+})
