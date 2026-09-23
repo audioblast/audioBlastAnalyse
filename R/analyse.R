@@ -76,6 +76,7 @@ analyse <- function(
   process_id <- hash_sha256(as.numeric(Sys.time())+Sys.getpid())
 
   cont <- TRUE
+  empties <- 0
   while (cont) {
     if (debug) {
       # Debug mode is used to debug an individual recording
@@ -99,6 +100,7 @@ analyse <- function(
     }
 
     if (nrow(ss)>0) {
+      empties <- 0
       for (i in 1:nrow(ss)) {
         if (verbose) print(paste("ID: ", ss[i, "id"]))
         if (mode=="local") {
@@ -113,9 +115,20 @@ analyse <- function(
         }
         doTask(db, task, ss[[i, "source"]], ss[[i, "id"]], tmp, process_id, force, verbose)
       }
-    } else {
-      if (verbose) print("No outstanding tasks")
-      cont <- FALSE
+    } else if (!debug) {
+      #A claim that came back empty is not yet a sign that the work is done:
+      #another agent may have won every task this one tried for, or the claim
+      #may have failed. So the agent asks again, a while later, and only stops
+      #when asking has come back empty for long enough.
+      empties <- empties + 1
+      wait <- emptyClaimWait(empties)
+      if (is.na(wait)) {
+        if (verbose) print("No outstanding tasks")
+        cont <- FALSE
+      } else {
+        if (verbose) print(paste("Nothing claimed, asking again in", round(wait), "s"))
+        pause(wait)
+      }
     }
     if (debug) {
       # Debug mode is for debugging a single recording
@@ -123,6 +136,27 @@ analyse <- function(
     }
   }
   return();
+}
+
+#How long an agent waits before claiming again, after the given number of
+#claims in a row have come back empty, or NA once that has happened often
+#enough to believe there is no work left.
+#
+#Every agent asks for the first unclaimed recording, so agents that ask at
+#the same moment are all given the same one, and all but one of them come
+#away with nothing. An agent that took that for the end of the work would
+#stop while there was still work to do. The waits are spread at random so
+#that agents that collided once do not collide again; they add up to about two
+#minutes before an agent gives up.
+emptyClaimWait <- function(empties) {
+  waits <- c(1, 5, 15, 30, 60)
+  if (empties > length(waits)) return(NA_real_)
+  return(waits[empties] * stats::runif(1, 0.5, 1.5))
+}
+
+#Waits, as its own function so that tests need not
+pause <- function(seconds) {
+  Sys.sleep(seconds)
 }
 
 #Does one of the tasks an agent has claimed, and settles the claim on it: a
