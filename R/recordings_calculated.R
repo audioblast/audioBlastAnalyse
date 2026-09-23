@@ -2,8 +2,8 @@
 #'
 #' Measures the file a recording is held in and writes what it found to the
 #' `recordings-calculated` table: its SHA-256 hash, how long it is, how many
-#' channels it has, the rate it was sampled at, the bits a sample is held in,
-#' its bit rate, the format it is in and its size in bytes.
+#' channels it has, the rate it was sampled at, its bit depth, its bit rate,
+#' the format it is in and its size in bytes.
 #'
 #' These are measurements of the file itself, and are kept apart from what a
 #' source says about a recording, which is in the `recordings` table. A source
@@ -13,6 +13,12 @@
 #' rest is what the container says of itself, so measuring an hour of audio
 #' costs what measuring a second does. Measurements that need the audio itself,
 #' such as its peak amplitude, belong with the analyses that decode it.
+#'
+#' The bit depth is what the file's own header says: how many bits of each
+#' sample mean something, which for a 20-bit recording stored in 24-bit samples
+#' is 20. Decoders cannot be asked, as they widen samples into a format of their
+#' own. Only a lossless file has one, and one whose header cannot be read, such
+#' as FLAC in Matroska, has none recorded rather than a guess.
 #'
 #' A recording that cannot be read is recorded as such rather than passed over,
 #' so that a source of files that have moved, or that were never audio, can be
