@@ -3,3 +3,7 @@
 .Rhistory
 .RData
 .httr-oauth
+
+# SQL is never committed to this repository
+*.sql
+sql/
