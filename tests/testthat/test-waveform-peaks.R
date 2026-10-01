@@ -21,9 +21,9 @@ fakeAudiowaveform <- function(peaks=somePeaks(), works=TRUE) {
 }
 
 test_that("an agent asks for waveform peaks only where it can make them", {
-  local_mocked_bindings(hasAudiowaveform=function() FALSE)
+  local_mocked_bindings(hasAudiowaveform=function() FALSE, hasFfmpeg=function() FALSE)
   expect_identical(tasksDone(), "recordings_calculated")
-  local_mocked_bindings(hasAudiowaveform=function() TRUE)
+  local_mocked_bindings(hasAudiowaveform=function() TRUE, hasFfmpeg=function() FALSE)
   expect_identical(tasksDone(), c("recordings_calculated", "waveform_peaks"))
 })
 
@@ -48,7 +48,7 @@ anOggPage <- function(packet, segments=length(packet)) {
 
 test_that("a WAV is known by its header, whatever its size", {
   wav <- aWave()
-  on.exit(unlink(wav))
+  on.exit(unlink(wav), add=TRUE)
   expect_identical(audioFormat(wav), "wav")
   #An RF64 file is laid out as a WAV is
   withBytes(wav, 1, charToRaw("RF64"))
@@ -57,19 +57,19 @@ test_that("a WAV is known by its header, whatever its size", {
 
 test_that("a FLAC file is known by its header", {
   flac <- aFlac()
-  on.exit(unlink(flac))
+  on.exit(unlink(flac), add=TRUE)
   expect_identical(audioFormat(flac), "flac")
 })
 
 test_that("an MP3 is known by its header", {
   mp3 <- aConverted(".mp3")
-  on.exit(unlink(mp3))
+  on.exit(unlink(mp3), add=TRUE)
   expect_identical(audioFormat(mp3), "mp3")
 })
 
 test_that("an MP3 is known by its frames when it has no ID3 tag", {
   path <- tempfile()
-  on.exit(unlink(path))
+  on.exit(unlink(path), add=TRUE)
   writeBin(as.raw(c(0xFF, 0xFB, 0x90, 0x64, rep(0, 60))), path)
   expect_identical(audioFormat(path), "mp3")
 })
@@ -81,7 +81,7 @@ test_that("an Ogg file is known by the codec its first packet starts", {
   flac <- anOggPage(c(as.raw(0x7F), charToRaw("FLAC"), as.raw(rep(0, 46))))
   #A table of more than one segment puts the packet further on
   long <- anOggPage(c(charToRaw("OpusHead"), as.raw(rep(0, 11))), segments=c(8, 11))
-  on.exit(unlink(c(vorbis, opus, flac, long)))
+  on.exit(unlink(c(vorbis, opus, flac, long)), add=TRUE)
 
   expect_identical(audioFormat(vorbis), "ogg")
   expect_identical(audioFormat(opus), "opus")
@@ -91,20 +91,20 @@ test_that("an Ogg file is known by the codec its first packet starts", {
 
 test_that("a file audiowaveform does not read has no format to read it as", {
   aiff <- aConverted(".aiff")
-  on.exit(unlink(aiff))
+  on.exit(unlink(aiff), add=TRUE)
   expect_true(is.na(audioFormat(aiff)))
 })
 
 test_that("what is not audio, or is not there, has no format", {
   notAudio <- aFile()
-  on.exit(unlink(notAudio))
+  on.exit(unlink(notAudio), add=TRUE)
   expect_true(is.na(audioFormat(notAudio)))
   expect_true(is.na(audioFormat(tempfile())))
 })
 
 test_that("peaks are only peaks when there are as many values as they say", {
   path <- tempfile(fileext=".json")
-  on.exit(unlink(path))
+  on.exit(unlink(path), add=TRUE)
   writeLines(somePeaks(length=3), path)
   expect_true(peaksValid(path))
   writeLines(somePeaks(length=3, channels=2), path)
@@ -129,7 +129,7 @@ test_that("a file audiowaveform reads is given it as it is", {
   local_mocked_bindings(runAudiowaveform=fake$run)
   wav <- aWave()
   out <- tempfile(fileext=".json")
-  on.exit(unlink(c(wav, out)))
+  on.exit(unlink(c(wav, out)), add=TRUE)
 
   expect_true(peaksFile(wav, out))
   expect_identical(fake$calls()[[1]]$input, wav)
@@ -141,7 +141,7 @@ test_that("a file audiowaveform does not read is converted to WAV first", {
   local_mocked_bindings(runAudiowaveform=fake$run)
   aiff <- aConverted(".aiff")
   out <- tempfile(fileext=".json")
-  on.exit(unlink(c(aiff, out)))
+  on.exit(unlink(c(aiff, out)), add=TRUE)
 
   expect_true(peaksFile(aiff, out))
   call <- fake$calls()[[1]]
@@ -156,7 +156,7 @@ test_that("no peaks are made of what is not audio", {
   local_mocked_bindings(runAudiowaveform=fake$run)
   notAudio <- aFile()
   out <- tempfile(fileext=".json")
-  on.exit(unlink(c(notAudio, out)))
+  on.exit(unlink(c(notAudio, out)), add=TRUE)
 
   expect_false(peaksFile(notAudio, out))
   expect_length(fake$calls(), 0)
@@ -166,7 +166,7 @@ test_that("peaks that audiowaveform did not finish are not peaks", {
   local_mocked_bindings(runAudiowaveform=fakeAudiowaveform(works=FALSE)$run)
   wav <- aWave()
   out <- tempfile(fileext=".json")
-  on.exit(unlink(c(wav, out)))
+  on.exit(unlink(c(wav, out)), add=TRUE)
   expect_false(peaksFile(wav, out))
 
   local_mocked_bindings(runAudiowaveform=fakeAudiowaveform(peaks="{\"version\":2")$run)
@@ -177,7 +177,7 @@ test_that("peaks are put under their source and id, and their address given", {
   dir <- tempfile("served")
   peaks <- tempfile(fileext=".json")
   writeLines(somePeaks(), peaks)
-  on.exit(unlink(c(dir, peaks), recursive=TRUE))
+  on.exit(unlink(c(dir, peaks), recursive=TRUE), add=TRUE)
 
   url <- publishPeaks(peaks, "bio.acousti.ca", "10753", dir=dir, rsync="",
                       base="https://files.audioblast.org/")
@@ -197,7 +197,7 @@ test_that("a source or id that is no name for a file is named as the download ca
   dir <- tempfile("served")
   peaks <- tempfile(fileext=".json")
   writeLines(somePeaks(), peaks)
-  on.exit(unlink(c(dir, peaks), recursive=TRUE))
+  on.exit(unlink(c(dir, peaks), recursive=TRUE), add=TRUE)
 
   url <- publishPeaks(peaks, "xc", "a/b c", dir=dir, rsync="", base="https://files.audioblast.org/")
   expect_identical(url, paste0("https://files.audioblast.org/peaks/xc/", safeName("a/b c"), ".json"))
@@ -214,7 +214,7 @@ test_that("peaks are sent by rsync where there is no directory to put them in", 
   })
   peaks <- tempfile(fileext=".json")
   writeLines(somePeaks(), peaks)
-  on.exit(unlink(peaks))
+  on.exit(unlink(peaks), add=TRUE)
 
   url <- publishPeaks(peaks, "bio.acousti.ca", "10753", dir="", rsync="peaks@files:/srv/files/",
                       base="https://files.audioblast.org/")
@@ -232,7 +232,7 @@ test_that("peaks that could not be sent have no address", {
   local_mocked_bindings(runRsync=function(from, to) FALSE)
   peaks <- tempfile(fileext=".json")
   writeLines(somePeaks(), peaks)
-  on.exit(unlink(peaks))
+  on.exit(unlink(peaks), add=TRUE)
 
   expect_true(is.na(publishPeaks(peaks, "unp", "1", dir="", rsync="peaks@files:/srv/files/")))
   expect_warning(expect_true(is.na(publishPeaks(peaks, "unp", "1", dir="", rsync=""))),
@@ -278,7 +278,8 @@ test_that("deleting all of a recording's analyses forgets where its peaks are", 
 peaksRun <- function(path, rows=list(), works=TRUE, force=FALSE) {
   dir <- tempfile("served")
   withr::defer(unlink(dir, recursive=TRUE), envir=parent.frame())
-  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=dir, AUDIOBLAST_PEAKS_RSYNC=NA,
+  withr::local_envvar(AUDIOBLAST_FILES_DIR=NA, AUDIOBLAST_FILES_RSYNC=NA, AUDIOBLAST_FILES_URL=NA,
+                      AUDIOBLAST_PEAKS_DIR=dir, AUDIOBLAST_PEAKS_RSYNC=NA,
                       AUDIOBLAST_PEAKS_URL="https://files.audioblast.org/")
   local_mocked_bindings(hasAudiowaveform=function() TRUE,
                         runAudiowaveform=fakeAudiowaveform(works=works)$run)
@@ -289,7 +290,7 @@ peaksRun <- function(path, rows=list(), works=TRUE, force=FALSE) {
 
 test_that("peaks are made, put where they are served from, and their address written", {
   wav <- aWave()
-  on.exit(unlink(wav))
+  on.exit(unlink(wav), add=TRUE)
   mocked <- peaksRun(wav)
 
   expect_identical(mocked$value, "measured")
@@ -300,7 +301,7 @@ test_that("peaks are made, put where they are served from, and their address wri
 
 test_that("a recording that has peaks keeps them, unless they are to be made again", {
   wav <- aWave()
-  on.exit(unlink(wav))
+  on.exit(unlink(wav), add=TRUE)
   had <- someRows(peaks_url="https://files.audioblast.org/peaks/bio.acousti.ca/10753.json")
 
   mocked <- peaksRun(wav, rows=had)
@@ -314,7 +315,7 @@ test_that("a recording that has peaks keeps them, unless they are to be made aga
 
 test_that("a recording no peaks can be made of is done with, and nothing written", {
   notAudio <- aFile()
-  on.exit(unlink(notAudio))
+  on.exit(unlink(notAudio), add=TRUE)
   mocked <- peaksRun(notAudio)
   expect_identical(mocked$value, "unmeasurable")
   expect_length(mocked$executed, 0)
@@ -333,17 +334,18 @@ test_that("a recording that could not be downloaded is not fetched again for its
 
 test_that("peaks with nowhere to go, or whose address is not kept, are given back", {
   wav <- aWave()
-  on.exit(unlink(wav))
+  on.exit(unlink(wav), add=TRUE)
   local_mocked_bindings(hasAudiowaveform=function() TRUE,
                         runAudiowaveform=fakeAudiowaveform()$run)
-  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=NA, AUDIOBLAST_PEAKS_RSYNC=NA)
+  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=NA, AUDIOBLAST_PEAKS_RSYNC=NA,
+                      AUDIOBLAST_FILES_DIR=NA, AUDIOBLAST_FILES_RSYNC=NA)
   mocked <- suppressWarnings(mockDB(waveform_peaks("db", "unp", "1", wav)))
   expect_identical(mocked$value, "retry")
   expect_length(mocked$executed, 0)
 
   dir <- tempfile("served")
   on.exit(unlink(dir, recursive=TRUE), add=TRUE)
-  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=dir)
+  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=dir, AUDIOBLAST_FILES_DIR=NA)
   local_mocked_bindings(dbExecute=function(conn, statement, params=NULL, ...) stop("The database has gone away"),
                         dbGetQuery=function(conn, statement, params=NULL, ...) data.frame(),
                         backoff=function() c(0, 0))
@@ -352,8 +354,8 @@ test_that("peaks with nowhere to go, or whose address is not kept, are given bac
 
 test_that("an agent without audiowaveform gives peaks back rather than crossing them off", {
   wav <- aWave()
-  on.exit(unlink(wav))
-  local_mocked_bindings(hasAudiowaveform=function() FALSE)
+  on.exit(unlink(wav), add=TRUE)
+  local_mocked_bindings(hasAudiowaveform=function() FALSE, hasFfmpeg=function() FALSE)
   mocked <- expect_warning(mockDB(doTask("db", "waveform_peaks", "unp", "1", wav, "agent1")),
                            "audiowaveform is not to be found")
 
@@ -365,8 +367,8 @@ test_that("an agent without audiowaveform gives peaks back rather than crossing 
 test_that("a waveform peaks task that was done is crossed off", {
   wav <- aWave()
   dir <- tempfile("served")
-  on.exit(unlink(c(wav, dir), recursive=TRUE))
-  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=dir)
+  on.exit(unlink(c(wav, dir), recursive=TRUE), add=TRUE)
+  withr::local_envvar(AUDIOBLAST_PEAKS_DIR=dir, AUDIOBLAST_FILES_DIR=NA)
   local_mocked_bindings(hasAudiowaveform=function() TRUE,
                         runAudiowaveform=fakeAudiowaveform()$run)
   mocked <- mockDB(doTask("db", "waveform_peaks", "bio.acousti.ca", "10753", wav, "agent1"))
@@ -380,7 +382,7 @@ test_that("audiowaveform itself makes peaks of a recording", {
   skip_if_not(hasAudiowaveform(), "audiowaveform is not installed")
   wav <- aWave(seconds=2)
   out <- tempfile(fileext=".json")
-  on.exit(unlink(c(wav, out)))
+  on.exit(unlink(c(wav, out)), add=TRUE)
 
   expect_true(peaksFile(wav, out))
   peaks <- rjson::fromJSON(file=out)

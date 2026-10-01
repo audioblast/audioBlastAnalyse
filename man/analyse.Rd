@@ -50,7 +50,8 @@ many agents analyse it on one machine.}
 \item{tasks}{The kinds of task to ask for. An agent is only offered these,
 rather than everything abaR is registered for, so that it does not claim
 work it would only give straight back. Defaults to what doTask() does:
-recordings_calculated, and waveform_peaks where audiowaveform is installed.}
+recordings_calculated, waveform_peaks where audiowaveform is installed, and
+spectrogram_tiles where ffmpeg is.}
 
 \item{n}{How many tasks to claim at a time. A task is given back by itself
 if the agent stops, so this can be raised: finishing any one task tells

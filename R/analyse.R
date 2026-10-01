@@ -23,7 +23,8 @@
 #' @param tasks The kinds of task to ask for. An agent is only offered these,
 #'   rather than everything abaR is registered for, so that it does not claim
 #'   work it would only give straight back. Defaults to what doTask() does:
-#'   recordings_calculated, and waveform_peaks where audiowaveform is installed.
+#'   recordings_calculated, waveform_peaks where audiowaveform is installed, and
+#'   spectrogram_tiles where ffmpeg is.
 #' @param n How many tasks to claim at a time. A task is given back by itself
 #'   if the agent stops, so this can be raised: finishing any one task tells
 #'   the database the agent is still alive and holding the rest.
@@ -172,7 +173,8 @@ analyse <- function(
 #The analysis that does each kind of task doTask() does, each called as
 #recordings_calculated() is and answering with what came of it
 taskAnalyses <- function() {
-  return(list(recordings_calculated=recordings_calculated, waveform_peaks=waveform_peaks))
+  return(list(recordings_calculated=recordings_calculated, waveform_peaks=waveform_peaks,
+              spectrogram_tiles=spectrogram_tiles))
 }
 
 #How long an agent waits before claiming again, after the given number of
@@ -206,7 +208,8 @@ pause <- function(seconds) {
 #task that has been done is crossed off, and one that has not is given back for
 #another agent to do.
 #
-#Only recordings_calculated and waveform_peaks are done for now. The soundscape
+#Only recordings_calculated, waveform_peaks and spectrogram_tiles are done for
+#now. The soundscape
 #analyses are still here as functions, and can be called directly, but no
 #longer run from a claimed task: the per-minute analyses are being dropped, and
 #what becomes of the rest is not settled.

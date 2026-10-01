@@ -18,7 +18,8 @@
 #The objects the analysis service reads and writes
 schemaObjects <- function() {
   return(c("tasks", "tasks-progress", "tasks-agents", "tasks-data",
-           "recordings-calculated", "v-recordings-calculated", "v-recordings"))
+           "recordings-calculated", "v-recordings-calculated",
+           "analysis-spectrogram", "v-recordings"))
 }
 
 #The routines that hand work to an agent and take it back again

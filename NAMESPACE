@@ -5,6 +5,7 @@ export(recordings_calculated)
 export(soundscapes_by_minute)
 export(soundscapes_by_second)
 export(soundscapes_spectro)
+export(spectrogram_tiles)
 export(waveform_peaks)
 importFrom(DBI,
   dbExecute,
