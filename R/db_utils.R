@@ -70,9 +70,11 @@ agentName <- function() {
 #The kinds of task this agent does. Anything else it were offered would be
 #claimed and given straight back, which is work for the database and none for
 #the agent: of the tasks abaR is registered for, most are soundscapes that
-#doTask() no longer runs.
+#doTask() no longer runs. Waveform peaks are asked for only where audiowaveform
+#is installed, for the same reason: an agent without it would give back every
+#one it claimed.
 tasksDone <- function() {
-  return("recordings_calculated")
+  return(c("recordings_calculated", if (hasAudiowaveform()) "waveform_peaks"))
 }
 
 #The kinds of task to ask for, written as FIND_IN_SET reads them. It matches
