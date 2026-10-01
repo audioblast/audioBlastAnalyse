@@ -22,7 +22,8 @@
 #'   many agents analyse it on one machine.
 #' @param tasks The kinds of task to ask for. An agent is only offered these,
 #'   rather than everything abaR is registered for, so that it does not claim
-#'   work it would only give straight back. Defaults to what doTask() does.
+#'   work it would only give straight back. Defaults to what doTask() does:
+#'   recordings_calculated, and waveform_peaks where audiowaveform is installed.
 #' @param n How many tasks to claim at a time. A task is given back by itself
 #'   if the agent stops, so this can be raised: finishing any one task tells
 #'   the database the agent is still alive and holding the rest.
@@ -168,6 +169,12 @@ analyse <- function(
   return();
 }
 
+#The analysis that does each kind of task doTask() does, each called as
+#recordings_calculated() is and answering with what came of it
+taskAnalyses <- function() {
+  return(list(recordings_calculated=recordings_calculated, waveform_peaks=waveform_peaks))
+}
+
 #How long an agent waits before claiming again, after the given number of
 #claims in a row have come back empty, or NA once that has happened often
 #enough to believe there is no work left.
@@ -199,27 +206,28 @@ pause <- function(seconds) {
 #task that has been done is crossed off, and one that has not is given back for
 #another agent to do.
 #
-#Only recordings_calculated is done for now. The soundscape analyses are still
-#here as functions, and can be called directly, but no longer run from a
-#claimed task: the per-minute analyses are being dropped, and what becomes of
-#the rest is not settled.
+#Only recordings_calculated and waveform_peaks are done for now. The soundscape
+#analyses are still here as functions, and can be called directly, but no
+#longer run from a claimed task: the per-minute analyses are being dropped, and
+#what becomes of the rest is not settled.
 #
 #A task of any other kind is given back rather than passed over. An agent that
 #claims a task it will not do would otherwise hold it for good, and the task
 #would be counted as being in hand while nobody was doing it.
 doTask <- function(db, task, source, id, path, process, force=FALSE, verbose=FALSE) {
-  if (!identical(task, "recordings_calculated")) {
+  analyses <- taskAnalyses()
+  if (!is.character(task) || length(task) != 1 || !(task %in% names(analyses))) {
     warning(paste0("Not a task this agent does, and given back: ", task))
     releaseToDo(db, source, id, task, process)
     return(invisible("released"))
   }
 
-  if (verbose) print("Recordings calculated")
-  outcome <- recordings_calculated(db, source, id, path, force, verbose)
+  if (verbose) print(task)
+  outcome <- analyses[[task]](db, source, id, path, force, verbose)
 
-  #Measurements the database would not keep are worth making again, so the
-  #task goes back. Anything else is done with: a recording that cannot be read
-  #will not read any better for being measured twice.
+  #Work the database would not keep, or that could not be finished here, is
+  #worth doing again, so the task goes back. Anything else is done with: a
+  #recording that cannot be read will not read any better for being read twice.
   if (outcome == "retry") {
     releaseToDo(db, source, id, task, process)
     return(invisible("released"))

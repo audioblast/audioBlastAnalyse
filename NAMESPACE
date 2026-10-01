@@ -5,6 +5,7 @@ export(recordings_calculated)
 export(soundscapes_by_minute)
 export(soundscapes_by_second)
 export(soundscapes_spectro)
+export(waveform_peaks)
 importFrom(DBI,
   dbExecute,
   dbGetQuery,
@@ -12,12 +13,18 @@ importFrom(DBI,
   dbQuoteString,
   dbSendStatement
 )
-importFrom(av,av_media_info)
+importFrom(av,
+  av_audio_convert,
+  av_media_info
+)
 importFrom(cli,
   hash_file_sha256,
   hash_sha256
 )
-importFrom(rjson,toJSON)
+importFrom(rjson,
+  fromJSON,
+  toJSON
+)
 importFrom(seewave,
   ACI,
   H,

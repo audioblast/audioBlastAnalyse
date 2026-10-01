@@ -26,6 +26,8 @@ test_that("the agent reads back what it won with a plain SELECT", {
 })
 
 test_that("the claim says who is asking, for what, how much and from where", {
+  #What is asked for by default depends on whether audiowaveform is installed
+  local_mocked_bindings(hasAudiowaveform=function() FALSE)
   mocked <- mockDB(fetchUnanalysedRecordings("db", "unp", "agent1", n=25))
 
   expect_identical(theClaim(mocked)$params,
@@ -36,6 +38,7 @@ test_that("an agent asks only for the kinds of task it does", {
   #Without this an agent claims a soundscape task, finds doTask() does not do
   #it, and gives it straight back: ten claimed and ten released, round and
   #round. Most of what abaR is registered for is work it no longer runs.
+  local_mocked_bindings(hasAudiowaveform=function() FALSE)
   expect_identical(tasksDone(), "recordings_calculated")
 
   mocked <- mockDB(fetchUnanalysedRecordings(
@@ -65,11 +68,18 @@ test_that("the agent names itself as tasks-agents names it", {
 test_that("a recording is claimed for all of its outstanding tasks at once", {
   #The web path downloads the file, so every task of that recording is worth
   #claiming while it is in hand
+  local_mocked_bindings(hasAudiowaveform=function() FALSE)
   mocked <- mockDB(fetchDownloadableRecordings("db", "bio.acousti.ca", "agent1"))
 
   expect_identical(theClaim(mocked)$sql, "CALL `claim-tasks-by-file`(?, ?, ?, ?);")
   expect_identical(theClaim(mocked)$params,
                    list("agent1", "bio.acousti.ca", "abaR", "recordings_calculated"))
+
+  #Where it can make waveform peaks it makes them from the same download
+  local_mocked_bindings(hasAudiowaveform=function() TRUE)
+  mocked <- mockDB(fetchDownloadableRecordings("db", "bio.acousti.ca", "agent1"))
+  expect_identical(theClaim(mocked)$params,
+                   list("agent1", "bio.acousti.ca", "abaR", "recordings_calculated,waveform_peaks"))
 })
 
 test_that("a source or id is bound, never written into the statement", {

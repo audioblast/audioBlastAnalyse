@@ -25,6 +25,7 @@ Roxygen: list(markdown = TRUE)
 Suggests:
     spelling,
     testthat,
-    covr
+    covr,
+    withr
 ByteCompile: true
 Config/roxygen2/version: 8.1.0
