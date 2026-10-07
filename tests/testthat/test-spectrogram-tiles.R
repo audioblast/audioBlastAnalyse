@@ -125,15 +125,25 @@ test_that("files are put where AUDIOBLAST_FILES_ says, or where AUDIOBLAST_PEAKS
 test_that("where a recording's tiles are is written over where they were, bound not written in", {
   mocked <- mockDB(writeSpectrogram("db", "o'brien", "1", "https://files.audioblast.org/spectrograms/x/index.json"))
   statement <- onlyStatement(mocked)
-  expect_match(statement$sql, "^INSERT INTO `analysis-spectrogram` \\(`source`, `id`, `type`, `value`\\)")
-  expect_match(statement$sql, "ON DUPLICATE KEY UPDATE `value` = VALUES\\(`value`\\);$")
+  #Beside the recording's measurements, in a row of its own where there are none
+  expect_match(statement$sql, "^INSERT INTO `recordings-calculated` \\(`source`, `id`, `spectrogram_url`\\)")
+  expect_match(statement$sql, "ON DUPLICATE KEY UPDATE `spectrogram_url` = VALUES\\(`spectrogram_url`\\);$")
   expect_false(grepl("o'brien", statement$sql, fixed=TRUE))
   expect_identical(statement$params,
-                   list("o'brien", "1", spectrogramType(), "https://files.audioblast.org/spectrograms/x/index.json"))
+                   list("o'brien", "1", "https://files.audioblast.org/spectrograms/x/index.json"))
+})
 
-  found <- mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(value="https://example.org/index.json"))
-  expect_identical(found$value, "https://example.org/index.json")
+test_that("a recording's tiles are looked up by its source and id, and count only if made as they are now", {
+  now <- paste0("https://files.audioblast.org/", spectrogramPath("unp", "1"), "index.json")
+  found <- mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(spectrogram_url=now))
+  expect_identical(found$value, now)
+  expect_match(found$queried, "SELECT `spectrogram_url` FROM `recordings-calculated` WHERE `source` = \\? AND `id` = \\?;")
+
+  #None, or tiles made another way: to be made (again)
   expect_true(is.na(mockDB(spectrogramURL("db", "unp", "1"))$value))
+  expect_true(is.na(mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(spectrogram_url=NA_character_))$value))
+  older <- "https://files.audioblast.org/spectrograms/unp/1/jpg60s86pps256h-2025-01a/index.json"
+  expect_true(is.na(mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(spectrogram_url=older))$value))
 })
 
 #spectrogram_tiles() as an agent runs it: tiles served from a directory, with
@@ -159,18 +169,23 @@ test_that("tiles are made, put where they are served from, and their manifest's 
   expect_identical(mocked$value, "measured")
   served <- file.path(mocked$dir, spectrogramPath("bio.acousti.ca", "10753"))
   expect_setequal(list.files(served), c("0.jpg", "1.jpg", "2.jpg", "index.json"))
-  expect_identical(onlyStatement(mocked)$params[[4]],
+  expect_identical(onlyStatement(mocked)$params[[3]],
                    paste0("https://files.audioblast.org/", spectrogramPath("bio.acousti.ca", "10753"), "index.json"))
 })
 
 test_that("a recording that has tiles keeps them, unless they are to be made again", {
   wav <- aWave()
   on.exit(unlink(wav), add=TRUE)
-  had <- someRows(value="https://files.audioblast.org/spectrograms/bio.acousti.ca/10753/t/index.json")
+  had <- someRows(spectrogram_url=paste0("https://files.audioblast.org/",
+                                         spectrogramPath("bio.acousti.ca", "10753"), "index.json"))
   mocked <- tilesRun(wav, rows=had)
   expect_identical(mocked$value, "kept")
   expect_identical(mocked$made, 0)
   expect_identical(tilesRun(wav, rows=had, force=TRUE)$value, "measured")
+
+  #Tiles made another way are made again, as these are now
+  older <- someRows(spectrogram_url="https://files.audioblast.org/spectrograms/bio.acousti.ca/10753/t/index.json")
+  expect_identical(tilesRun(wav, rows=older)$value, "measured")
 })
 
 test_that("a recording no tiles can be made of, or that was never downloaded, is done with", {

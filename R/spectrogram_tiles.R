@@ -2,8 +2,8 @@
 #'
 #' Makes a spectrogram of the file a recording is held in, cut into tiles a
 #' minute long, puts them where they are served from, and writes the address of
-#' the manifest that describes them to the `analysis-spectrogram` table, from
-#' which the API gives it as the recording's `spectrogram_url`. A player shows
+#' the manifest that describes them as the recording's `spectrogram_url` in
+#' `recordings-calculated`, from which the API gives it. A player shows
 #' the spectrogram from them at once, before the audio has arrived, and instead
 #' of one it would make itself where the browser cannot decode the whole
 #' recording (see wavesurfer-tiled-spectrogram, whose `tools/make-tiles.sh` makes
@@ -79,9 +79,10 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
   return(invisible("measured"))
 }
 
-#How the tiles are made, as `analysis-spectrogram` names them: JPEG, a minute
-#a tile, about 86 columns a second, 256 rows, and the calibration of their
-#levels. Tiles made another way would be another type, beside these.
+#How the tiles are made, as the directory they are put in names them: JPEG, a
+#minute a tile, about 86 columns a second, 256 rows, and the calibration of
+#their levels. Tiles made another way go in another directory, and replace
+#these as the recording's spectrogram_url.
 spectrogramType <- function() {
   return("jpg60s86pps256h-2026-10a")
 }
@@ -227,22 +228,27 @@ spectrogramPath <- function(source, id) {
 }
 
 #The address of the manifest of a recording's tiles, or NA where it has none,
-#or where the database could not be asked: then they are made, as making them
+#where the tiles it has were made another way (their address names how), or
+#where the database could not be asked: then they are made, as making them
 #twice costs less than never making them
 spectrogramURL <- function(db, source, id) {
   found <- abdbGetQuery(db,
-    "SELECT `value` FROM `analysis-spectrogram` WHERE `source` = ? AND `id` = ? AND `type` = ?;",
-    params=list(source, id, spectrogramType()))
+    "SELECT `spectrogram_url` FROM `recordings-calculated` WHERE `source` = ? AND `id` = ?;",
+    params=list(source, id))
   if (is.null(found) || nrow(found) == 0 || is.na(found[1, 1]) || !nzchar(found[1, 1])) {
     return(NA_character_)
   }
-  return(as.character(found[1, 1]))
+  url <- as.character(found[1, 1])
+  if (!grepl(paste0("/", spectrogramType(), "/"), url, fixed=TRUE)) return(NA_character_)
+  return(url)
 }
 
-#Writes where the manifest of a recording's tiles is, over where it was
+#Writes where the manifest of a recording's tiles is, over where it was. As
+#with writePeaks(), a recording not yet measured is given a row holding only
+#this, which measuring it fills in.
 writeSpectrogram <- function(db, source, id, url) {
   return(abdbExecute(db, paste(
-    "INSERT INTO `analysis-spectrogram` (`source`, `id`, `type`, `value`) VALUES (?, ?, ?, ?)",
-    "ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);"),
-    params=list(source, id, spectrogramType(), url)))
+    "INSERT INTO `recordings-calculated` (`source`, `id`, `spectrogram_url`) VALUES (?, ?, ?)",
+    "ON DUPLICATE KEY UPDATE `spectrogram_url` = VALUES(`spectrogram_url`);"),
+    params=list(source, id, url)))
 }

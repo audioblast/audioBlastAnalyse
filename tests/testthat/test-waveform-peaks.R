@@ -261,16 +261,16 @@ test_that("a recording's peaks are looked up by its source and id", {
   expect_true(is.na(mockDB(peaksURL("db", "unp", "1"), rows=someRows(peaks_url=NA_character_))$value))
 })
 
-test_that("deleting all of a recording's analyses forgets where its peaks are", {
+test_that("deleting all of a recording's analyses forgets where its peaks and tiles are", {
   mocked <- mockDB(deleteAllAnalyses("db", "unp", "1", justR=FALSE))
   cleared <- Filter(function(s) startsWith(s$sql, "UPDATE `recordings-calculated`"), mocked$executed)
   expect_length(cleared, 1)
-  expect_match(cleared[[1]]$sql, "SET `peaks_url` = NULL WHERE `source` = \\? AND `id` = \\?;$")
+  expect_match(cleared[[1]]$sql, "SET `peaks_url` = NULL, `spectrogram_url` = NULL WHERE `source` = \\? AND `id` = \\?;$")
   expect_identical(cleared[[1]]$params, list("unp", "1"))
 
-  #Only analyses made by this package, which peaks are not, by default
+  #Only analyses made by this package, which these are not, by default
   mocked <- mockDB(deleteAllAnalyses("db", "unp", "1"))
-  expect_false(any(vapply(mocked$executed, function(s) grepl("peaks_url", s$sql, fixed=TRUE), TRUE)))
+  expect_false(any(vapply(mocked$executed, function(s) grepl("_url", s$sql, fixed=TRUE), TRUE)))
 })
 
 #waveform_peaks() as an agent runs it: peaks served from a directory, with

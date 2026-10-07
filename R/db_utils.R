@@ -27,11 +27,11 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   deleteAnalysis(db, "analysis-th", source, id)
 
   if (justR==FALSE) {
-    #Where the recording's peaks are is held beside its measurements, not in a
-    #table of its own
-    abdbExecute(db, "UPDATE `recordings-calculated` SET `peaks_url` = NULL WHERE `source` = ? AND `id` = ?;",
+    #Where the recording's peaks and spectrogram tiles are is held beside its
+    #measurements, not in tables of their own
+    abdbExecute(db, paste("UPDATE `recordings-calculated` SET `peaks_url` = NULL, `spectrogram_url` = NULL",
+                          "WHERE `source` = ? AND `id` = ?;"),
                 params=list(source, id))
-    deleteAnalysis(db, "analysis-spectrogram", source, id)
   }
 }
 

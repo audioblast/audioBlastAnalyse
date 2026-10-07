@@ -34,8 +34,8 @@ database would not keep their address, or ffmpeg is not to be found here.
 \description{
 Makes a spectrogram of the file a recording is held in, cut into tiles a
 minute long, puts them where they are served from, and writes the address of
-the manifest that describes them to the \code{analysis-spectrogram} table, from
-which the API gives it as the recording's \code{spectrogram_url}. A player shows
+the manifest that describes them as the recording's \code{spectrogram_url} in
+\code{recordings-calculated}, from which the API gives it. A player shows
 the spectrogram from them at once, before the audio has arrived, and instead
 of one it would make itself where the browser cannot decode the whole
 recording (see wavesurfer-tiled-spectrogram, whose \code{tools/make-tiles.sh} makes
