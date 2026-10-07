@@ -27,7 +27,10 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   deleteAnalysis(db, "analysis-th", source, id)
 
   if (justR==FALSE) {
-    deleteAnalysis(db, "analysis-audiowaveform", source, id)
+    #Where the recording's peaks are is held beside its measurements, not in a
+    #table of its own
+    abdbExecute(db, "UPDATE `recordings-calculated` SET `peaks_url` = NULL WHERE `source` = ? AND `id` = ?;",
+                params=list(source, id))
   }
 }
 

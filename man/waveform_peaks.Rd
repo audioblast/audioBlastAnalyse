@@ -34,10 +34,10 @@ found here. The task is worth doing again, perhaps by another agent.
 }
 \description{
 Makes the waveform peaks of the file a recording is held in, puts them where
-they are served from, and writes where that is to the
-\code{analysis-audiowaveform} table, from which the API gives them as the
-recording's \code{peaks_url}. A player draws the recording's waveform from them
-while the audio itself is still on its way.
+they are served from, and writes where that is as the recording's
+\code{peaks_url} in \code{recordings-calculated}, from which the API gives it. A
+player draws the recording's waveform from them while the audio itself is
+still on its way.
 }
 \details{
 The peaks are made by BBC audiowaveform: the minimum and maximum of each
