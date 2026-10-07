@@ -212,6 +212,8 @@ spectrogramManifest <- function(rate, samples, spc, width, height, count, channe
     sprintf('  "fftSize": %d,', as.integer(2 * height)),
     '  "window": "hann",',
     '  "colorMap": "gray",',
+    #In wavesurfer.js's terms: ffmpeg measures a sine 2 dB lower than it does
+    sprintf('  "dbRange": [%s, %s],', format(settings$limit - 2 - settings$drange), format(settings$limit - 2)),
     sprintf('  "renderer": {"name": "ffmpeg showspectrumpic", "scale": "log", "drange": %s, "limit": %s},',
             format(settings$drange), format(settings$limit)),
     sprintf('  "calibration": "%s"', settings$calibration),

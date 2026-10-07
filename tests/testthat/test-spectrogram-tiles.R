@@ -241,6 +241,7 @@ test_that("ffmpeg itself makes tiles whose every column is where it should be in
     expect_equal(manifest$tileCount, 2)
     expect_equal(manifest$duration, 70)
     expect_equal(manifest$frequencyMax, rate / 2)
+    expect_equal(manifest$dbRange, c(-130, -50))
     expect_equal(manifest$tileDuration, manifest$width * spc / rate, tolerance=1e-8)
 
     pixels <- list(tilePixels(file.path(out, "0.jpg")), tilePixels(file.path(out, "1.jpg")))
