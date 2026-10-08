@@ -4,4 +4,3 @@
 ^\.travis\.yml$
 ^codecov\.yml$
 ^tools$
-^\.claude$
