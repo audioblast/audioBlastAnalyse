@@ -49,7 +49,9 @@ file's own sample rate:
 \itemize{
 \item 256 rows, from a 512-point FFT with a Hann window;
 \item about 86 columns a second in the finest level, each a whole number of
-samples, so that no column drifts against the audio;
+samples, so that no column drifts against the audio. Above 96 kHz, where
+such a column would combine three or more FFT windows and lose the timing
+of short sounds, about 344, in tiles a quarter as long (see finestLevel());
 \item coarser levels each with four times fewer columns, until one tile covers
 the recording, each pixel keeping the loudest of the four it covers, so
 that short sounds still show zoomed out;
@@ -65,7 +67,8 @@ waveform_peaks() makes, not instead of them.
 
 They are put at \verb{spectrograms/<source>/<id>/<type>/}, the source and id named
 as the download cache names them (see safeName()) and the type saying how
-they were made (spectrogramType()): each level's tiles in a directory named
-by its samples a column, the peaks beside them, and the manifest,
-\code{index.json}, put last. Where they are put is as for waveform_peaks().
+they were made (spectrogramType(), which depends on the file's sample rate):
+each level's tiles in a directory named by its samples a column, the peaks
+beside them, and the manifest, \code{index.json}, put last. Where they are put is
+as for waveform_peaks().
 }

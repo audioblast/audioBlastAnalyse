@@ -94,8 +94,25 @@ test_that("tiles are put under their source, id and how they were made", {
                    "spectrograms/bio.acousti.ca/10753/jpg60s86pps256h-2026-10b/")
   expect_identical(spectrogramPath("xc", "a/b c"),
                    paste0("spectrograms/xc/", safeName("a/b c"), "/jpg60s86pps256h-2026-10b/"))
+  #Above 96 kHz the finest level is four times finer, in tiles a quarter as long
+  expect_identical(spectrogramPath("bio.acousti.ca", "51959", 200000),
+                   "spectrograms/bio.acousti.ca/51959/jpg15s344pps256h-2026-10b/")
+  expect_identical(spectrogramPath("bio.acousti.ca", "10753", 96000), spectrogramPath("bio.acousti.ca", "10753"))
   #The type is kept in a varchar(45)
   expect_lte(nchar(spectrogramType()), 45)
+  expect_lte(nchar(spectrogramType(200000)), 45)
+})
+
+test_that("above 96 kHz the finest level is four times finer, in tiles four times shorter", {
+  expect_equal(finestLevel(44100), list(pps=86, tileSeconds=60))
+  expect_equal(finestLevel(96000), list(pps=86, tileSeconds=60))
+  expect_equal(finestLevel(NA), list(pps=86, tileSeconds=60))
+  expect_equal(finestLevel(96001), list(pps=344, tileSeconds=15))
+  expect_equal(finestLevel(220500), list(pps=344, tileSeconds=15))
+  #As make-tiles.sh chooses them; the next level, four times coarser, is about
+  #the 86 columns a second that lower rates have finest
+  expect_equal(samplesPerColumn(220500, 344, 512), 640)
+  expect_equal(samplesPerColumn(200000, 344, 512), 582)
 })
 
 test_that("files are put in order, in directories of their own, the last only once the rest are", {
@@ -186,6 +203,13 @@ test_that("a recording's tiles are looked up by its source and id, and count onl
   expect_true(is.na(mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(spectrogram_url=NA_character_))$value))
   older <- "https://files.audioblast.org/spectrograms/unp/1/jpg60s86pps256h-2025-01a/index.json"
   expect_true(is.na(mockDB(spectrogramURL("db", "unp", "1"), rows=someRows(spectrogram_url=older))$value))
+
+  #Above 96 kHz only tiles made four times finer count
+  ultra <- function(type) paste0("https://files.audioblast.org/spectrograms/unp/2/", type, "/index.json")
+  coarse <- ultra("jpg60s86pps256h-2026-10b")
+  fine <- ultra("jpg15s344pps256h-2026-10b")
+  expect_true(is.na(mockDB(spectrogramURL("db", "unp", "2", 200000), rows=someRows(spectrogram_url=coarse))$value))
+  expect_identical(mockDB(spectrogramURL("db", "unp", "2", 200000), rows=someRows(spectrogram_url=fine))$value, fine)
 })
 
 #spectrogram_tiles() as an agent runs it: tiles served from a directory, with
@@ -347,6 +371,36 @@ test_that("ffmpeg itself makes tiles whose every column is where it should be in
     }
     unlink(c(wav, out), recursive=TRUE)
   }
+})
+
+test_that("ffmpeg itself makes tiles four times finer above 96 kHz, every click where it should be", {
+  skip_if_not(hasFfmpeg(), "ffmpeg is not installed")
+  rate <- 220500
+  wav <- aClickTrain(rate, seconds=20)
+  out <- tempfile("tiles")
+  on.exit(unlink(c(wav, out), recursive=TRUE), add=TRUE)
+  files <- spectrogramTiles(wav, out)
+  spc <- samplesPerColumn(rate, 344, 512)
+  expect_identical(files, c(paste0(spc, "/", 0:1, ".jpg"), paste0(4 * spc, "/0.jpg"),
+                            paste0("peaks-", c(spc, 4 * spc), ".json")))
+
+  manifest <- rjson::fromJSON(file=file.path(out, "index.json"))
+  levels <- manifest$levels
+  expect_equal(sapply(levels, `[[`, "samplesPerColumn"), c(spc, 4 * spc))
+  expect_equal(levels[[1]]$tileDuration, 15, tolerance=1e-3)
+  expect_equal(levels[[2]]$tileDuration, 60, tolerance=1e-3)
+
+  #Each click darkens the column of the finer level that holds it
+  width <- levels[[1]]$width
+  fine <- list(tilePixels(file.path(out, spc, "0.jpg")), tilePixels(file.path(out, spc, "1.jpg")))
+  for (k in 0:1) {
+    column <- (k * 10 * rate) %/% spc
+    clickAt(fine[[column %/% width + 1]], column %% width + 1, paste("220.5 kHz click", k))
+  }
+  peaks <- rjson::fromJSON(file=file.path(out, paste0("peaks-", spc, ".json")))
+  expect_equal(peaks$samples_per_pixel, spc)
+  high <- peaks$data[c(FALSE, TRUE)]
+  expect_equal(high[(c(0, 10) * rate) %/% spc + 1], c(30000, 30000))
 })
 
 test_that("ffmpeg itself makes no tiles of what is not audio", {

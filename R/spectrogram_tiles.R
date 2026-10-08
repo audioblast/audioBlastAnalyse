@@ -16,7 +16,9 @@
 #'
 #' * 256 rows, from a 512-point FFT with a Hann window;
 #' * about 86 columns a second in the finest level, each a whole number of
-#'   samples, so that no column drifts against the audio;
+#'   samples, so that no column drifts against the audio. Above 96 kHz, where
+#'   such a column would combine three or more FFT windows and lose the timing
+#'   of short sounds, about 344, in tiles a quarter as long (see finestLevel());
 #' * coarser levels each with four times fewer columns, until one tile covers
 #'   the recording, each pixel keeping the loudest of the four it covers, so
 #'   that short sounds still show zoomed out;
@@ -31,9 +33,10 @@
 #'
 #' They are put at `spectrograms/<source>/<id>/<type>/`, the source and id named
 #' as the download cache names them (see safeName()) and the type saying how
-#' they were made (spectrogramType()): each level's tiles in a directory named
-#' by its samples a column, the peaks beside them, and the manifest,
-#' `index.json`, put last. Where they are put is as for waveform_peaks().
+#' they were made (spectrogramType(), which depends on the file's sample rate):
+#' each level's tiles in a directory named by its samples a column, the peaks
+#' beside them, and the manifest, `index.json`, put last. Where they are put is
+#' as for waveform_peaks().
 #'
 #' @param db database connector
 #' @param source Source
@@ -56,15 +59,18 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
     warning("ffmpeg is not to be found, so spectrogram tiles are given back")
     return(invisible("retry"))
   }
-  if (!force && !is.na(spectrogramURL(db, source, id))) {
-    if (verbose) print(paste("Already has spectrogram tiles:", source, id))
-    return(invisible("kept"))
-  }
   #A recording that could not be downloaded comes as its address. ffmpeg would
   #try to fetch it again, so it is not given the chance.
   if (!file.exists(path)) {
     if (verbose) print(paste("No file to make spectrogram tiles from:", source, id))
     return(invisible("unmeasurable"))
+  }
+  #How tiles are made, and so which count as made already, depends on the
+  #file's sample rate
+  rate <- probeRate(path)
+  if (!force && !is.na(spectrogramURL(db, source, id, rate))) {
+    if (verbose) print(paste("Already has spectrogram tiles:", source, id))
+    return(invisible("kept"))
   }
 
   out <- tempfile("tiles")
@@ -76,7 +82,7 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
   }
 
   names <- c(files, "index.json")
-  url <- publishFiles(file.path(out, names), paste0(spectrogramPath(source, id), names))
+  url <- publishFiles(file.path(out, names), paste0(spectrogramPath(source, id, rate), names))
   if (is.na(url)) {
     warning(paste("Could not put the spectrogram tiles of", source, id, "where they are served from"))
     return(invisible("retry"))
@@ -89,12 +95,38 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
   return(invisible("measured"))
 }
 
-#How the tiles are made, as the directory they are put in names them: JPEG, a
-#minute a tile, about 86 columns a second in the finest level, 256 rows, and
-#the calibration of their loudness and levels. Tiles made another way go in
-#another directory, and replace these as the recording's spectrogram_url.
-spectrogramType <- function() {
+#How the tiles of a recording at this sample rate are made, as the directory
+#they are put in names them: JPEG, the finest level's tile length and columns
+#a second, 256 rows, and the calibration of their loudness and levels. Tiles
+#made another way go in another directory, and replace these as the
+#recording's spectrogram_url.
+spectrogramType <- function(rate=NA) {
+  if (finerTiles(rate)) return("jpg15s344pps256h-2026-10b")
   return("jpg60s86pps256h-2026-10b")
+}
+
+#Whether a recording at this sample rate has its finest level four times
+#finer: above 96 kHz a 512-point FFT window is under a third of a column of
+#86 a second, so such a column would combine three or more windows and lose
+#the timing of short sounds, such as ultrasonic pulses
+finerTiles <- function(rate) {
+  return(length(rate) == 1 && !is.na(rate) && rate > 96000)
+}
+
+#The finest level's columns a second and tile length for a recording at this
+#sample rate: as the settings say, or four times finer in tiles four times
+#shorter where finerTiles(), so that its next level is the one lower rates
+#have finest
+finestLevel <- function(rate, settings=spectrogramSettings()) {
+  if (finerTiles(rate)) return(list(pps=4 * settings$pps, tileSeconds=settings$tileSeconds / 4))
+  return(list(pps=settings$pps, tileSeconds=settings$tileSeconds))
+}
+
+#A file's sample rate, as ffprobe says it, or NA
+probeRate <- function(path) {
+  about <- probeAudio(path, "sample_rate")
+  if (is.null(about)) return(NA_real_)
+  return(suppressWarnings(as.numeric(about$sample_rate)))
 }
 
 #How the tiles are made, as spectrogramTiles() is told
@@ -186,8 +218,9 @@ spectrogramTiles <- function(path, out, settings=spectrogramSettings()) {
   samples <- suppressWarnings(as.numeric(probeAudio(mono, "duration_ts")$duration_ts))
   if (length(samples) != 1 || is.na(samples) || samples < 1) return(NULL)
 
-  spc <- samplesPerColumn(rate, settings$pps, 2 * settings$height)
-  width <- max(1, round(settings$tileSeconds * rate / spc))
+  finest <- finestLevel(rate, settings)
+  spc <- samplesPerColumn(rate, finest$pps, 2 * settings$height)
+  width <- max(1, round(finest$tileSeconds * rate / spc))
   levels <- tileLevels(samples, width, spc)
 
   files <- finestTiles(mono, rate, samples, spc, width, length(levels) > 1, out, lossless, settings)
@@ -411,15 +444,16 @@ spectrogramManifest <- function(rate, samples, width, height, levels, channel, s
 
 #Where a recording's tiles are put, under the directory or destination they
 #are served from and under the address they are served at, ending in "/"
-spectrogramPath <- function(source, id) {
-  return(paste0("spectrograms/", safeName(source), "/", safeName(id), "/", spectrogramType(), "/"))
+spectrogramPath <- function(source, id, rate=NA) {
+  return(paste0("spectrograms/", safeName(source), "/", safeName(id), "/", spectrogramType(rate), "/"))
 }
 
 #The address of the manifest of a recording's tiles, or NA where it has none,
 #where the tiles it has were made another way (their address names how), or
 #where the database could not be asked: then they are made, as making them
-#twice costs less than never making them
-spectrogramURL <- function(db, source, id) {
+#twice costs less than never making them. How they are made now depends on
+#the recording's sample rate.
+spectrogramURL <- function(db, source, id, rate=NA) {
   found <- abdbGetQuery(db,
     "SELECT `spectrogram_url` FROM `recordings-calculated` WHERE `source` = ? AND `id` = ?;",
     params=list(source, id))
@@ -427,7 +461,7 @@ spectrogramURL <- function(db, source, id) {
     return(NA_character_)
   }
   url <- as.character(found[1, 1])
-  if (!grepl(paste0("/", spectrogramType(), "/"), url, fixed=TRUE)) return(NA_character_)
+  if (!grepl(paste0("/", spectrogramType(rate), "/"), url, fixed=TRUE)) return(NA_character_)
   return(url)
 }
 
