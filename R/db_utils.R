@@ -87,13 +87,13 @@ taskList <- function(tasks) {
   return(paste(gsub(" ", "", tasks), collapse=","))
 }
 
-#No work, in the shape `tasks-data` answers in. A claim that could not be made
-#at all gives this rather than nothing, so that an agent asks again instead of
+#No work, in the shape heldBy() answers in. A claim that could not be made at
+#all gives this rather than nothing, so that an agent asks again instead of
 #falling over on an answer that is not there.
 noTasks <- function() {
   return(data.frame(source=character(), id=character(), file=character(),
                     type=character(), Duration=numeric(), task=character(),
-                    process=character(), stringsAsFactors=FALSE))
+                    process=character(), rec_key=integer(), stringsAsFactors=FALSE))
 }
 
 #What the database answered, or no work if it could not be asked
@@ -140,13 +140,60 @@ fetchUnanalysedRecordings <- function(db, source, process_id, tasks=tasksDone(),
   return(heldBy(db, process_id))
 }
 
-#What this agent came away with. A plain SELECT, so that it does not matter
-#what the client library was built against.
+#What this agent came away with: each task it holds, once, with the file of the
+#recording it is of. A plain SELECT, so that it does not matter what the client
+#library was built against.
+#
+#It is read from the claims themselves rather than from `tasks-data`, which
+#joins them to `recordings`. That view hides a claim on a task whose recording
+#has been deleted, which the agent then neither did nor cleared: it sat claimed
+#for five minutes, was offered to the next agent, and came back empty again, and
+#a run of them stopped agents as though there were no work left. Here such a
+#claim comes back with no recording, its `rec_key` NULL, for clearDeleted() to
+#clear. The view also gave a task held twice over in `tasks` twice, so that it
+#was done twice.
 heldBy <- function(db, process_id) {
   return(claimed(abdbGetQuery(
     db,
-    "SELECT * FROM `tasks-data` WHERE `process` = ?;",
+    paste("SELECT `tasks-progress`.`source`, `tasks-progress`.`id`, `recordings`.`file`,",
+          "`recordings`.`type`, `recordings`.`Duration`, `tasks-progress`.`task`,",
+          "`tasks-progress`.`process`, `recordings`.`rec_key`",
+          "FROM `tasks-progress` LEFT JOIN `recordings`",
+          "ON `recordings`.`source` = `tasks-progress`.`source`",
+          "AND `recordings`.`id` = `tasks-progress`.`id`",
+          "WHERE `tasks-progress`.`process` = ?;"),
     params=list(as.character(process_id)))))
+}
+
+#Whether a recording has been deleted from `recordings`, as one may be after its
+#tasks were set, or while an agent holds them. Only a database that answers,
+#and answers that there is no such recording, says so: one that could not be
+#asked says nothing, as clearing a task on its say-so would lose work that is
+#still to be done.
+recordingGone <- function(db, source, id) {
+  found <- abdbGetQuery(
+    db,
+    "SELECT `rec_key` FROM `recordings` WHERE `source` = ? AND `id` = ? LIMIT 1;",
+    params=list(as.character(source), as.character(id)))
+  return(is.data.frame(found) && nrow(found) == 0)
+}
+
+#The tasks claimed, less those of recordings that have been deleted, which are
+#cleared. Such a task can never be done -- there is no file to fetch and nothing
+#to measure -- so it is not given back for the next agent to trip over, nor
+#counted as having failed: it is crossed off, and the agent gets on with the
+#rest. A recording withdrawn because it may not be shared is then neither
+#downloaded nor measured.
+clearDeleted <- function(db, ss, process, verbose=FALSE) {
+  gone <- is.na(ss$rec_key)
+  for (i in which(gone)) {
+    if (verbose) {
+      print(paste("Recording deleted, task cleared:", ss[[i, "source"]], ss[[i, "id"]],
+                  ss[[i, "task"]]))
+    }
+    deleteToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process)
+  }
+  return(ss[!gone, , drop=FALSE])
 }
 
 #Crosses a task off: it has been done, and nobody need do it again.

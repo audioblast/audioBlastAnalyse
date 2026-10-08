@@ -26,10 +26,15 @@ test_that("debugging one recording needs to be told which, and what to do to it"
   expect_error(analyse(db, debug=TRUE, id="58428"), "task must be a character vector")
 })
 
-#A task claimed for a recording, in the shape `tasks-data` answers in
-aClaimedTask <- function(task="soundscapes_minute") {
-  return(someRows(source="unp", id="1", file="1.wav", type="audio/x-wav",
-                  Duration=60, task=task, process="p"))
+#A task claimed for a recording, in the shape heldBy() answers in. One whose
+#recording has been deleted comes back with no file, and no rec_key.
+aClaimedTask <- function(task="soundscapes_minute", id="1", deleted=FALSE) {
+  if (deleted) {
+    return(someRows(source="unp", id=id, file=NA_character_, type=NA_character_,
+                    Duration=NA_real_, task=task, process="p", rec_key=NA_integer_))
+  }
+  return(someRows(source="unp", id=id, file=paste0(id, ".wav"), type="audio/x-wav",
+                  Duration=60, task=task, process="p", rec_key=1L))
 }
 
 #How many times an agent asked the database for work
@@ -119,4 +124,68 @@ test_that("an agent has its connection speak UTF-8 before it asks for anything",
   mocked <- mockDB(analyse(aConnection(), mode="local", source="unp"))
 
   expect_identical(onlyStatement(mocked, 1)$sql, "SET NAMES utf8mb4;")
+})
+
+#The ids of the recordings whose tasks were crossed off, in order
+crossedOff <- function(mocked) {
+  return(vapply(statementsLike(mocked, "CALL `delete-task`"), function(s) s$params[[3]],
+                character(1)))
+}
+
+test_that("an agent clears the tasks of deleted recordings it claims, and carries on", {
+  #Clearing them is not coming away empty. A withdrawal leaves a run of them in
+  #the order agents claim in, and an agent that counted each as an empty claim
+  #stopped part way along it, with work still waiting behind it.
+  waited <- numeric()
+  done <- character()
+  local_mocked_bindings(pause=function(seconds) waited <<- c(waited, seconds),
+                        doTask=function(db, task, source, id, ...) done <<- c(done, id))
+  gone <- lapply(as.character(101:107),
+                 function(id) aClaimedTask("recordings_calculated", id, deleted=TRUE))
+  mocked <- mockDB(analyse(aConnection(), mode="local", source="unp"),
+                   rows=c(gone, list(aClaimedTask("recordings_calculated", "108"), noRows())))
+
+  #Seven cleared one after another, with no wait between them
+  expect_identical(crossedOff(mocked), as.character(101:107))
+  #and the recording after them done
+  expect_identical(done, "108")
+  #then the five waits of empty claims that end any run
+  expect_length(waited, 5)
+  expect_identical(claimsMade(mocked), 7L + 1L + 6L)
+  #Nothing was given back for another agent to claim
+  expect_length(statementsLike(mocked, "DELETE FROM `tasks-progress`"), 0)
+})
+
+test_that("nothing is downloaded for a recording that has been deleted", {
+  fetched <- character()
+  local_mocked_bindings(pause=function(seconds) NULL,
+                        webFile=function(file, source, id, ...) {
+                          fetched <<- c(fetched, id)
+                          NA_character_
+                        })
+  expect_no_warning(
+    mocked <- mockDB(analyse(aConnection(), mode="web", source="bio.acousti.ca"),
+                     rows=list(aClaimedTask("recordings_calculated", "101", deleted=TRUE),
+                               noRows())))
+
+  expect_length(fetched, 0)
+  expect_identical(crossedOff(mocked), "101")
+  expect_length(statementsLike(mocked, "INSERT INTO `recordings-calculated`"), 0)
+})
+
+test_that("a recording deleted while it downloads is not measured", {
+  #It was there when its task was claimed, and has gone by the time the file is
+  #in hand: the task is cleared as one claimed after the deletion is
+  path <- aWave()
+  on.exit(unlink(path))
+  local_mocked_bindings(pause=function(seconds) NULL,
+                        webFile=function(...) path)
+  expect_no_warning(
+    mocked <- mockDB(analyse(aConnection(), mode="web", source="bio.acousti.ca"),
+                     rows=list(aClaimedTask("recordings_calculated", "101"), noRows()),
+                     deleted="101"))
+
+  expect_identical(mocked$recordings, "101")
+  expect_identical(crossedOff(mocked), "101")
+  expect_length(statementsLike(mocked, "INSERT INTO `recordings-calculated`"), 0)
 })
