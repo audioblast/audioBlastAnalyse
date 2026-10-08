@@ -33,29 +33,39 @@ database would not keep their address, or ffmpeg is not to be found here.
 }
 \description{
 Makes a spectrogram of the file a recording is held in, cut into tiles a
-minute long, puts them where they are served from, and writes the address of
-the manifest that describes them as the recording's \code{spectrogram_url} in
-\code{recordings-calculated}, from which the API gives it. A player shows
-the spectrogram from them at once, before the audio has arrived, and instead
-of one it would make itself where the browser cannot decode the whole
-recording (see wavesurfer-tiled-spectrogram, whose \code{tools/make-tiles.sh} makes
-the same tiles, and whose SPEC.md describes them).
+minute long and at several resolutions, puts them where they are served from
+with the recording's waveform peaks at the same resolutions, and writes the
+address of the manifest that describes them as the recording's
+\code{spectrogram_url} in \code{recordings-calculated}, from which the API gives it. A
+player shows the spectrogram from them at once, before the audio has
+arrived, and instead of one it would make itself where the browser cannot
+decode the whole recording, streaming the audio with the peaks (see
+wavesurfer-tiled-spectrogram, whose \code{tools/make-tiles.sh} makes the same
+tiles, and whose SPEC.md describes them).
 }
 \details{
 The tiles are made by ffmpeg's showspectrumpic from the first channel, at the
 file's own sample rate:
 \itemize{
 \item 256 rows, from a 512-point FFT with a Hann window;
-\item about 86 columns a second, each a whole number of samples, so that no
-column drifts against the audio;
-\item levels mapped as wavesurfer.js's Spectrogram plugin maps them with
+\item about 86 columns a second in the finest level, each a whole number of
+samples, so that no column drifts against the audio;
+\item coarser levels each with four times fewer columns, until one tile covers
+the recording, each pixel keeping the loudest of the four it covers, so
+that short sounds still show zoomed out;
+\item loudness mapped as wavesurfer.js's Spectrogram plugin maps it with
 \verb{gainDB: 50, rangeDB: 80, colorMap: 'gray'}, so that one can stand in for
 the other;
 \item greyscale JPEG at ffmpeg quality 12.
 }
 
+The peaks are the lowest and highest sample of each column of each level, in
+the BBC audiowaveform JSON format at 16 bits. They are made as well as those
+waveform_peaks() makes, not instead of them.
+
 They are put at \verb{spectrograms/<source>/<id>/<type>/}, the source and id named
 as the download cache names them (see safeName()) and the type saying how
-they were made (spectrogramType()), with the manifest, \code{index.json}, put
-last. Where they are put is as for waveform_peaks().
+they were made (spectrogramType()): each level's tiles in a directory named
+by its samples a column, the peaks beside them, and the manifest,
+\code{index.json}, put last. Where they are put is as for waveform_peaks().
 }

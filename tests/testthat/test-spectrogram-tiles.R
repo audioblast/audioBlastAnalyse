@@ -2,17 +2,19 @@
 #for it; the tests against ffmpeg itself run where it is installed, and check
 #what matters about the tiles: that every column is where it should be in time.
 
-#Tiles as spectrogramTiles() would leave them: the given number of tile files
-#and a manifest, in out
+#Tiles as spectrogramTiles() would leave them in out: the given number of tiles
+#in the finest level, one in a coarser level, the peaks of both, and a manifest
 fakeTiles <- function(count=2) {
   calls <- 0
   make <- function(path, out, settings=spectrogramSettings()) {
     calls <<- calls + 1
-    dir.create(out, recursive=TRUE, showWarnings=FALSE)
-    tiles <- paste0(seq_len(count) - 1, ".jpg")
-    for (tile in tiles) writeBin(as.raw(c(0xFF, 0xD8, 0xFF, 0xD9)), file.path(out, tile))
+    files <- c(paste0("512/", seq_len(count) - 1, ".jpg"), "2048/0.jpg", "peaks-512.json", "peaks-2048.json")
+    for (file in files) {
+      dir.create(dirname(file.path(out, file)), recursive=TRUE, showWarnings=FALSE)
+      writeBin(as.raw(c(0xFF, 0xD8, 0xFF, 0xD9)), file.path(out, file))
+    }
     writeLines('{"type": "tiled-spectrogram", "version": 1}', file.path(out, "index.json"))
-    return(tiles)
+    return(files)
   }
   return(list(make=make, calls=function() calls))
 }
@@ -49,31 +51,71 @@ test_that("a column is a whole number of samples that ffmpeg divides into whole 
   }
 })
 
+test_that("tiles are made at levels each four times coarser, until one tile covers the recording", {
+  width <- 5168
+  expect_equal(tileLevels(20 * 44100, width, 512), 512)
+  expect_equal(tileLevels(70 * 44100, width, 512), c(512, 2048))
+  expect_equal(tileLevels(300 * 44100, width, 512), c(512, 2048, 8192))
+  expect_equal(tileLevels(3600 * 44100, width, 512), c(512, 2048, 8192, 32768))
+  #A recording of exactly a tile has one level; a sample more, and it has two
+  expect_equal(tileLevels(width * 512, width, 512), 512)
+  expect_equal(tileLevels(width * 512 + 1, width, 512), c(512, 2048))
+})
+
+test_that("each peak of a coarser level is the lowest, or highest, of four below", {
+  expect_equal(fourAsOne(c(-1, -5, -2, 0, -3), pmin, Inf), c(-5, -3))
+  expect_equal(fourAsOne(c(1, 5, 2, 0, 3, 4, 0, 1), pmax, -Inf), c(5, 4))
+  #As ffmpeg says them, rounded to 16 bits as make-tiles.sh rounds them
+  expect_equal(int16(c("lavfi.astats.1.Min_level=-1.000000", "lavfi.astats.1.Max_level=0.915527",
+                       "lavfi.astats.1.Max_level=1.000000", "lavfi.astats.1.Min_level=-0.000015")),
+               c(-32768, 30000, 32767, 0))
+})
+
+test_that("the manifest describes every level and its peaks, as make-tiles.sh writes them", {
+  lines <- spectrogramManifest(44100, 300 * 44100, 5168, 256, c(512, 2048, 8192), 0, spectrogramSettings())
+  manifest <- rjson::fromJSON(paste(lines, collapse="\n"))
+  expect_identical(manifest$type, "tiled-spectrogram")
+  expect_equal(manifest$version, 1)
+  expect_equal(manifest$duration, 300)
+  expect_equal(manifest$frequencyMax, 22050)
+  expect_equal(manifest$dbRange, c(-130, -50))
+  expect_identical(manifest$calibration, "2026-10b")
+  levels <- manifest$levels
+  expect_identical(sapply(levels, `[[`, "tiles"), c("512/{index}.jpg", "2048/{index}.jpg", "8192/{index}.jpg"))
+  expect_equal(sapply(levels, `[[`, "tileCount"), c(5, 2, 1))
+  expect_equal(sapply(levels, `[[`, "tileDuration"), 5168 * c(512, 2048, 8192) / 44100, tolerance=1e-9)
+  expect_equal(sapply(levels, `[[`, "width"), rep(5168, 3))
+  expect_identical(sapply(manifest$peaks, `[[`, "url"), c("peaks-512.json", "peaks-2048.json", "peaks-8192.json"))
+  expect_equal(sapply(manifest$peaks, `[[`, "samplesPerPixel"), c(512, 2048, 8192))
+})
+
 test_that("tiles are put under their source, id and how they were made", {
   expect_identical(spectrogramPath("bio.acousti.ca", "10753"),
-                   "spectrograms/bio.acousti.ca/10753/jpg60s86pps256h-2026-10a/")
+                   "spectrograms/bio.acousti.ca/10753/jpg60s86pps256h-2026-10b/")
   expect_identical(spectrogramPath("xc", "a/b c"),
-                   paste0("spectrograms/xc/", safeName("a/b c"), "/jpg60s86pps256h-2026-10a/"))
+                   paste0("spectrograms/xc/", safeName("a/b c"), "/jpg60s86pps256h-2026-10b/"))
   #The type is kept in a varchar(45)
   expect_lte(nchar(spectrogramType()), 45)
 })
 
-test_that("files are put in order, the last only once the rest are, and its address given", {
+test_that("files are put in order, in directories of their own, the last only once the rest are", {
   src <- tempfile("made")
   dir <- tempfile("served")
-  dir.create(src)
   on.exit(unlink(c(src, dir), recursive=TRUE), add=TRUE)
-  names <- c("0.jpg", "1.jpg", "index.json")
-  for (name in names) writeLines(name, file.path(src, name))
+  names <- c("512/0.jpg", "512/1.jpg", "2048/0.jpg", "peaks-512.json", "index.json")
+  for (name in names) {
+    dir.create(dirname(file.path(src, name)), recursive=TRUE, showWarnings=FALSE)
+    writeLines(name, file.path(src, name))
+  }
 
   url <- publishFiles(file.path(src, names), paste0("spectrograms/x/1/t/", names), dir=dir, rsync="",
                       base="https://files.audioblast.org")
   expect_identical(url, "https://files.audioblast.org/spectrograms/x/1/t/index.json")
-  expect_setequal(list.files(file.path(dir, "spectrograms/x/1/t")), names)
+  expect_setequal(list.files(file.path(dir, "spectrograms/x/1/t"), recursive=TRUE), names)
 
   #A file that cannot be put stops the rest, and the manifest is never put
   unlink(dir, recursive=TRUE)
-  unlink(file.path(src, "1.jpg"))
+  unlink(file.path(src, "2048/0.jpg"))
   expect_true(is.na(suppressWarnings(
     publishFiles(file.path(src, names), paste0("s/", names), dir=dir, rsync=""))))
   expect_false(file.exists(file.path(dir, "s/index.json")))
@@ -168,7 +210,9 @@ test_that("tiles are made, put where they are served from, and their manifest's 
 
   expect_identical(mocked$value, "measured")
   served <- file.path(mocked$dir, spectrogramPath("bio.acousti.ca", "10753"))
-  expect_setequal(list.files(served), c("0.jpg", "1.jpg", "2.jpg", "index.json"))
+  expect_setequal(list.files(served, recursive=TRUE),
+                  c("512/0.jpg", "512/1.jpg", "512/2.jpg", "2048/0.jpg", "peaks-512.json", "peaks-2048.json",
+                    "index.json"))
   expect_identical(onlyStatement(mocked)$params[[3]],
                    paste0("https://files.audioblast.org/", spectrogramPath("bio.acousti.ca", "10753"), "index.json"))
 })
@@ -241,38 +285,65 @@ tilePixels <- function(path) {
   return(matrix(as.integer(readBin(raw, "raw", n=size[1] * size[2])), nrow=size[2], byrow=TRUE))
 }
 
-test_that("ffmpeg itself makes tiles whose every column is where it should be in time", {
+#Whether a click darkens the column at (counting from 1) of a tile's pixels,
+#more than any other near it
+clickAt <- function(pixels, at, label) {
+  darkness <- 255 - colMeans(pixels)
+  near <- max(1, at - 6):min(ncol(pixels), at + 6)
+  expect_lte(abs(near[which.max(darkness[near])] - at), 1, label=label)
+}
+
+test_that("ffmpeg itself makes tiles whose every column is where it should be in time, at every level", {
   skip_if_not(hasFfmpeg(), "ffmpeg is not installed")
   for (rate in c(44100, 48000)) {
     wav <- aClickTrain(rate)
     out <- tempfile("tiles")
-    tiles <- spectrogramTiles(wav, out)
-    expect_identical(tiles, c("0.jpg", "1.jpg"), info=paste(rate, "Hz"))
+    files <- spectrogramTiles(wav, out)
+    spc <- samplesPerColumn(rate, 86, 512)
+    expect_identical(files, c(paste0(spc, "/", 0:1, ".jpg"), paste0(4 * spc, "/0.jpg"),
+                              paste0("peaks-", c(spc, 4 * spc), ".json")), info=paste(rate, "Hz"))
 
     manifest <- rjson::fromJSON(file=file.path(out, "index.json"))
-    spc <- samplesPerColumn(rate, 86, 512)
     expect_identical(manifest$type, "tiled-spectrogram")
-    expect_equal(manifest$samplesPerColumn, spc)
-    expect_equal(manifest$tileCount, 2)
     expect_equal(manifest$duration, 70)
     expect_equal(manifest$frequencyMax, rate / 2)
     expect_equal(manifest$dbRange, c(-130, -50))
-    expect_equal(manifest$tileDuration, manifest$width * spc / rate, tolerance=1e-8)
+    levels <- manifest$levels
+    expect_equal(sapply(levels, `[[`, "samplesPerColumn"), c(spc, 4 * spc))
+    expect_equal(sapply(levels, `[[`, "tileCount"), c(2, 1))
+    for (level in levels) {
+      expect_equal(level$tileDuration, level$width * level$samplesPerColumn / rate, tolerance=1e-8)
+    }
+    expect_identical(sapply(manifest$peaks, `[[`, "url"), paste0("peaks-", c(spc, 4 * spc), ".json"))
 
-    pixels <- list(tilePixels(file.path(out, "0.jpg")), tilePixels(file.path(out, "1.jpg")))
-    expect_identical(dim(pixels[[1]]), c(256L, as.integer(manifest$width)))
-    #The last tile is as wide as the audio left for it, to the column
-    left <- 70 * rate - manifest$width * spc
-    expect_identical(ncol(pixels[[2]]), as.integer(ceiling(left / spc)))
+    width <- levels[[1]]$width
+    fine <- list(tilePixels(file.path(out, spc, "0.jpg")), tilePixels(file.path(out, spc, "1.jpg")))
+    coarse <- tilePixels(file.path(out, 4 * spc, "0.jpg"))
+    expect_identical(dim(fine[[1]]), c(256L, as.integer(width)))
+    #The last tile of a level is as wide as the audio left for it, to the column
+    left <- 70 * rate - width * spc
+    expect_identical(ncol(fine[[2]]), as.integer(ceiling(left / spc)))
+    expect_identical(dim(coarse), c(256L, as.integer(ceiling(70 * rate / (4 * spc)))))
 
-    #Every click darkens the column that holds it, in whichever tile that is
+    #Every click darkens the column that holds it, in whichever tile that is,
+    #and in the coarser level too, though it is shorter than a column there
     for (k in 0:6) {
       column <- (k * 10 * rate) %/% spc
-      tile <- column %/% manifest$width + 1
-      at <- column %% manifest$width + 1
-      darkness <- 255 - colMeans(pixels[[tile]])
-      near <- max(1, at - 6):min(ncol(pixels[[tile]]), at + 6)
-      expect_lte(abs(near[which.max(darkness[near])] - at), 1, label=paste(rate, "Hz click", k))
+      clickAt(fine[[column %/% width + 1]], column %% width + 1, paste(rate, "Hz click", k))
+      clickAt(coarse, (k * 10 * rate) %/% (4 * spc) + 1, paste(rate, "Hz click", k, "zoomed out"))
+    }
+
+    #The peaks have a point a column at each level, and the clicks where they are
+    for (s in c(spc, 4 * spc)) {
+      peaks <- rjson::fromJSON(file=file.path(out, paste0("peaks-", s, ".json")))
+      expect_equal(c(peaks$version, peaks$channels, peaks$bits), c(2, 1, 16))
+      expect_equal(c(peaks$sample_rate, peaks$samples_per_pixel), c(rate, s))
+      expect_equal(peaks$length, ceiling(70 * rate / s))
+      expect_length(peaks$data, 2 * peaks$length)
+      high <- peaks$data[c(FALSE, TRUE)]
+      clicks <- (seq(0, 60, by=10) * rate) %/% s + 1
+      expect_equal(high[clicks], rep(30000, 7), label=paste(rate, "Hz peaks at", s))
+      expect_true(all(high[-clicks] == 0))
     }
     unlink(c(wav, out), recursive=TRUE)
   }
