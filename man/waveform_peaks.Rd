@@ -48,8 +48,9 @@ not read is converted to WAV with ffmpeg first.
 
 Peaks are put at \verb{peaks/<source>/<id>.json}, the source and id named as the
 download cache names them (see safeName()), either in the directory
-\code{AUDIOBLAST_PEAKS_DIR} names, where an agent runs beside the files it
-serves, or by rsync to the destination \code{AUDIOBLAST_PEAKS_RSYNC} names. Their
-address is that path under \code{AUDIOBLAST_PEAKS_URL}, by default
-\verb{https://files.audioblast.org/}.
+\code{AUDIOBLAST_FILES_DIR} names, where an agent runs beside the files it
+serves, or by rsync to the destination \code{AUDIOBLAST_FILES_RSYNC} names. Their
+address is that path under \code{AUDIOBLAST_FILES_URL}, by default
+\verb{https://files.audioblast.org/}. These were first named \code{AUDIOBLAST_PEAKS_DIR},
+\verb{_RSYNC} and \verb{_URL}, which are still read where the others are not set.
 }

@@ -14,10 +14,11 @@
 #'
 #' Peaks are put at `peaks/<source>/<id>.json`, the source and id named as the
 #' download cache names them (see safeName()), either in the directory
-#' `AUDIOBLAST_PEAKS_DIR` names, where an agent runs beside the files it
-#' serves, or by rsync to the destination `AUDIOBLAST_PEAKS_RSYNC` names. Their
-#' address is that path under `AUDIOBLAST_PEAKS_URL`, by default
-#' `https://files.audioblast.org/`.
+#' `AUDIOBLAST_FILES_DIR` names, where an agent runs beside the files it
+#' serves, or by rsync to the destination `AUDIOBLAST_FILES_RSYNC` names. Their
+#' address is that path under `AUDIOBLAST_FILES_URL`, by default
+#' `https://files.audioblast.org/`. These were first named `AUDIOBLAST_PEAKS_DIR`,
+#' `_RSYNC` and `_URL`, which are still read where the others are not set.
 #'
 #' @param db database connector
 #' @param source Source
@@ -147,17 +148,6 @@ runAudiowaveform <- function(input, format, out) {
   return(identical(as.integer(status), 0L))
 }
 
-#Copies a file to an rsync destination, giving whether it was copied. The file
-#is named as it is to be named there from the /./ in its path on, which rsync
-#keeps (--relative), making the directories it needs.
-runRsync <- function(from, to) {
-  status <- tryCatch(
-    system2("rsync", c("--relative", "--chmod=D755,F644", shQuote(from), shQuote(to)),
-            stdout=FALSE, stderr=FALSE),
-    error=function(e) -1L)
-  return(identical(as.integer(status), 0L))
-}
-
 #The input format audiowaveform is to read a file as, from what the file says
 #of itself rather than its name or MIME type (BioAcoustica has files called
 #application/octet-stream), or NA for anything it does not read, such as AIFF
@@ -205,34 +195,11 @@ peaksPath <- function(source, id) {
   return(paste0("peaks/", safeName(source), "/", safeName(id), ".json"))
 }
 
-#Puts a recording's peaks where they are served from, giving their address,
-#or NA where they could not be put there. A file is never served half written:
-#in a directory it is written beside where it goes and moved there, and rsync
-#does the same at the other end.
+#Puts a recording's peaks where they are served from (see publishFiles()),
+#giving their address, or NA where they could not be put there
 publishPeaks <- function(file, source, id,
-                         dir=Sys.getenv("AUDIOBLAST_PEAKS_DIR"),
-                         rsync=Sys.getenv("AUDIOBLAST_PEAKS_RSYNC"),
-                         base=Sys.getenv("AUDIOBLAST_PEAKS_URL", "https://files.audioblast.org/")) {
-  path <- peaksPath(source, id)
-  if (nzchar(dir)) {
-    dest <- file.path(dir, path)
-    dir.create(dirname(dest), recursive=TRUE, showWarnings=FALSE)
-    part <- paste0(dest, ".", Sys.getpid(), ".part")
-    put <- file.copy(file, part, overwrite=TRUE) && file.rename(part, dest)
-    unlink(part)
-    if (!put) return(NA_character_)
-  } else if (nzchar(rsync)) {
-    #Staged under the path it is to have, so that rsync makes the source's
-    #directory where there is none yet
-    stage <- tempfile("peaks")
-    on.exit(unlink(stage, recursive=TRUE), add=TRUE)
-    staged <- file.path(stage, path)
-    dir.create(dirname(staged), recursive=TRUE, showWarnings=FALSE)
-    if (!file.copy(file, staged)) return(NA_character_)
-    if (!runRsync(paste0(stage, "/./", path), rsync)) return(NA_character_)
-  } else {
-    warning("Neither AUDIOBLAST_PEAKS_DIR nor AUDIOBLAST_PEAKS_RSYNC is set, so peaks have nowhere to go")
-    return(NA_character_)
-  }
-  return(paste0(sub("/*$", "/", base), path))
+                         dir=filesSetting("DIR"),
+                         rsync=filesSetting("RSYNC"),
+                         base=filesSetting("URL", "https://files.audioblast.org/")) {
+  return(publishFiles(file, peaksPath(source, id), dir=dir, rsync=rsync, base=base))
 }

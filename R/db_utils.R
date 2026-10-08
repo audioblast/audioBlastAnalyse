@@ -27,9 +27,10 @@ deleteAllAnalyses <- function(db, source, id, justR=TRUE) {
   deleteAnalysis(db, "analysis-th", source, id)
 
   if (justR==FALSE) {
-    #Where the recording's peaks are is held beside its measurements, not in a
-    #table of its own
-    abdbExecute(db, "UPDATE `recordings-calculated` SET `peaks_url` = NULL WHERE `source` = ? AND `id` = ?;",
+    #Where the recording's peaks and spectrogram tiles are is held beside its
+    #measurements, not in tables of their own
+    abdbExecute(db, paste("UPDATE `recordings-calculated` SET `peaks_url` = NULL, `spectrogram_url` = NULL",
+                          "WHERE `source` = ? AND `id` = ?;"),
                 params=list(source, id))
   }
 }
@@ -74,10 +75,11 @@ agentName <- function() {
 #claimed and given straight back, which is work for the database and none for
 #the agent: of the tasks abaR is registered for, most are soundscapes that
 #doTask() no longer runs. Waveform peaks are asked for only where audiowaveform
-#is installed, for the same reason: an agent without it would give back every
-#one it claimed.
+#is installed, and spectrogram tiles only where ffmpeg is, for the same reason:
+#an agent without them would give back every one it claimed.
 tasksDone <- function() {
-  return(c("recordings_calculated", if (hasAudiowaveform()) "waveform_peaks"))
+  return(c("recordings_calculated", if (hasAudiowaveform()) "waveform_peaks",
+           if (hasFfmpeg()) "spectrogram_tiles"))
 }
 
 #The kinds of task to ask for, written as FIND_IN_SET reads them. It matches
