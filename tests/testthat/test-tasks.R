@@ -9,6 +9,8 @@ test_that("a task that was done is crossed off", {
   mocked <- mockDB(doTask("db", "recordings_calculated", "bio.acousti.ca", "58428", path, "agent1"))
 
   expect_identical(mocked$value, "measured")
+  #The recording was asked after before it was measured
+  expect_identical(mocked$recordings, "58428")
   #The measurements, and then the task crossed off
   expect_length(mocked$executed, 2)
   expect_identical(settled(mocked)$sql, "CALL `delete-task`(?, ?, ?, ?);")
@@ -43,7 +45,10 @@ test_that("a task whose work was not kept is given back, not crossed off", {
   #The measurements fail to write; giving the task back must still work
   written <- 0
   local_mocked_bindings(
-    dbGetQuery=function(conn, statement, params=NULL, ...) data.frame(),
+    #The recording is still there, and has not been measured
+    dbGetQuery=function(conn, statement, params=NULL, ...) {
+      if (isRecordingQuery(statement)) someRows(rec_key=1L) else data.frame()
+    },
     dbExecute=function(conn, statement, params=NULL, ...) {
       written <<- written + 1
       if (grepl("INSERT INTO `recordings-calculated`", statement, fixed=TRUE)) {
@@ -79,6 +84,53 @@ test_that("no task this agent does not do is measured", {
     #Nothing was asked of recordings-calculated, so nothing was measured
     expect_length(mocked$queried, 0)
   }
+})
+
+test_that("a task whose recording has been deleted is cleared, not done", {
+  #A recording may be deleted while an agent holds its tasks, as one withdrawn
+  #because it may not be shared is. Its task is crossed off without a word: no
+  #warning, no retry, and nothing measured, made or written of a recording
+  #that has gone.
+  path <- aWave()
+  on.exit(unlink(path))
+  for (task in c("recordings_calculated", "waveform_peaks")) {
+    expect_no_warning(
+      mocked <- mockDB(doTask("db", task, "bio.acousti.ca", "56106", path, "agent1"),
+                       deleted="56106"))
+
+    expect_identical(mocked$value, "cleared")
+    expect_length(mocked$executed, 1)
+    expect_identical(settled(mocked)$sql, "CALL `delete-task`(?, ?, ?, ?);")
+    expect_identical(settled(mocked)$params, list("agent1", "bio.acousti.ca", "56106", task))
+    #Nothing was asked of recordings-calculated, so nothing was measured
+    expect_length(mocked$queried, 0)
+  }
+})
+
+test_that("whether a recording has gone is asked of recordings, its source and id bound", {
+  asked <- NULL
+  answer <- data.frame()
+  local_mocked_bindings(dbGetQuery=function(conn, statement, params=NULL, ...) {
+    asked <<- list(sql=statement, params=params)
+    answer
+  })
+
+  expect_true(recordingGone("db", "o'brien", "1"))
+  expect_match(asked$sql, "FROM `recordings` WHERE `source` = ? AND `id` = ?", fixed=TRUE)
+  expect_identical(asked$params, list("o'brien", "1"))
+
+  answer <- someRows(rec_key=1L)
+  expect_false(recordingGone("db", "o'brien", "1"))
+})
+
+test_that("a recording is taken to have gone only when the database says so", {
+  #A database away for a moment must not have tasks cleared that still have
+  #work to do: the task is done, or given back, as it would have been
+  local_mocked_bindings(
+    dbGetQuery=function(conn, statement, params=NULL, ...) stop("The database has gone away"),
+    backoff=function() c(0, 0))
+
+  expect_false(suppressWarnings(recordingGone("db", "bio.acousti.ca", "58428")))
 })
 
 test_that("a claim is given back by the agent that made it", {

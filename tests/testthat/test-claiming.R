@@ -22,7 +22,55 @@ test_that("claiming asks for a routine that answers with nothing", {
 test_that("the agent reads back what it won with a plain SELECT", {
   mocked <- mockDB(fetchUnanalysedRecordings("db", "unp", "agent1"))
 
-  expect_identical(mocked$queried, "SELECT * FROM `tasks-data` WHERE `process` = ?;")
+  expect_length(mocked$queried, 1)
+  expect_match(mocked$queried, "^SELECT ")
+  expect_match(mocked$queried, "WHERE `tasks-progress`.`process` = ?;", fixed=TRUE)
+})
+
+test_that("a claim is read back with the recording it is of, or none where that has gone", {
+  #`tasks-data` joins claims to `recordings`, and so hid a claim on a task whose
+  #recording had been deleted: the agent neither did it nor cleared it, and a
+  #run of them stopped agents as though the work were done. Read from the claims
+  #themselves, each comes back, its rec_key NULL where its recording has gone.
+  #`tasks` is not read either, so a task held twice over there comes back once.
+  mocked <- mockDB(fetchDownloadableRecordings("db", "bio.acousti.ca", "agent1"))
+  read <- mocked$queried
+
+  expect_match(read, "FROM `tasks-progress` LEFT JOIN `recordings`", fixed=TRUE)
+  expect_match(read, "`recordings`.`rec_key`", fixed=TRUE)
+  expect_false(grepl("tasks-data", read, fixed=TRUE))
+  expect_false(grepl("`tasks`", read, fixed=TRUE))
+})
+
+#Tasks claimed, as heldBy() reads them back: one of a recording that is there
+#and one of a recording that has been deleted, with no file and no rec_key
+someClaims <- function() {
+  return(someRows(source=c("bio.acousti.ca", "bio.acousti.ca"), id=c("10753", "56106"),
+                  file=c("https://files.audioblast.org/bioacoustica/a.wav", NA),
+                  type=c("audio/x-wav", NA), Duration=c("5", NA),
+                  task=c("recordings_calculated", "recordings_calculated"),
+                  process=c("agent1", "agent1"), rec_key=c(7L, NA)))
+}
+
+test_that("a task claimed for a recording that has been deleted is cleared", {
+  #It can never be done, so it is crossed off rather than given back for the
+  #next agent to claim, and the tasks of recordings that are there are kept
+  mocked <- mockDB(clearDeleted("db", someClaims(), "agent1"))
+
+  expect_identical(mocked$value$id, "10753")
+  expect_length(mocked$executed, 1)
+  expect_identical(onlyStatement(mocked)$sql, "CALL `delete-task`(?, ?, ?, ?);")
+  expect_identical(onlyStatement(mocked)$params,
+                   list("agent1", "bio.acousti.ca", "56106", "recordings_calculated"))
+})
+
+test_that("nothing is cleared while every recording claimed is there", {
+  claims <- someClaims()[1, , drop=FALSE]
+  mocked <- mockDB(clearDeleted("db", claims, "agent1"))
+
+  expect_identical(mocked$value, claims)
+  expect_length(mocked$executed, 0)
+  expect_identical(nrow(mockDB(clearDeleted("db", noTasks(), "agent1"))$value), 0L)
 })
 
 test_that("the claim says who is asking, for what, how much and from where", {

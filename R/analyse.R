@@ -97,6 +97,14 @@ analyse <- function(
       # Files for analysis are mounted locally
       ss <- fetchUnanalysedRecordings(db, source, process_id, tasks=tasks, n=n)
     }
+    # A task claimed for a recording that has since been deleted is cleared
+    # rather than done, and nothing is fetched for it (see clearDeleted())
+    cleared <- 0
+    if (!debug) {
+      kept <- clearDeleted(db, ss, process_id, verbose)
+      cleared <- nrow(ss) - nrow(kept)
+      ss <- kept
+    }
     # The tasks claimed above are all of one recording, so its file is fetched
     # once and read by each of them. Nothing is fetched when nothing was
     # claimed: there is then no recording to fetch the file of.
@@ -146,6 +154,11 @@ analyse <- function(
         }
         doTask(db, task, ss[[i, "source"]], ss[[i, "id"]], tmp, process_id, force, verbose)
       }
+    } else if (cleared > 0) {
+      #Clearing tasks that could never be done is not coming away empty: there
+      #may be work behind them, which is asked for straight away. A run of
+      #deleted recordings would otherwise look like the end of the work.
+      empties <- 0
     } else if (!debug && !given_back) {
       #A claim that came back empty is not yet a sign that the work is done:
       #another agent may have won every task this one tried for, or the claim
@@ -214,12 +227,22 @@ pause <- function(seconds) {
 #A task of any other kind is given back rather than passed over. An agent that
 #claims a task it will not do would otherwise hold it for good, and the task
 #would be counted as being in hand while nobody was doing it.
+#
+#A task whose recording has been deleted since it was claimed is cleared rather
+#than done, as clearDeleted() clears one claimed after the deletion: it is
+#crossed off, and what came of it is "cleared". Nothing is measured, made or
+#written of a recording that has gone.
 doTask <- function(db, task, source, id, path, process, force=FALSE, verbose=FALSE) {
   analyses <- taskAnalyses()
   if (!is.character(task) || length(task) != 1 || !(task %in% names(analyses))) {
     warning(paste0("Not a task this agent does, and given back: ", task))
     releaseToDo(db, source, id, task, process)
     return(invisible("released"))
+  }
+  if (recordingGone(db, source, id)) {
+    if (verbose) print(paste("Recording deleted, task cleared:", source, id, task))
+    deleteToDo(db, source, id, task, process)
+    return(invisible("cleared"))
   }
 
   if (verbose) print(task)
