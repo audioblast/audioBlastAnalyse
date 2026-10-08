@@ -120,7 +120,6 @@ test_that("peaks are only peaks when there are as many values as they say", {
 
 test_that("audiowaveform is asked for 86 points a second at 8 bits, mixed to one channel", {
   #Read from the arguments it is given, as running it is stood in for
-  expect_identical(peaksType(), "json86pps8bit")
   expect_identical(peaksPerSecond(), 86)
   expect_identical(peaksBits(), 8)
 })
@@ -244,20 +243,34 @@ test_that("where peaks are is written over where they were, bound not written in
   mocked <- mockDB(writePeaks("db", "o'brien", "1", "https://files.audioblast.org/peaks/o-brien/1.json"))
   statement <- onlyStatement(mocked)
 
-  expect_match(statement$sql, "^INSERT INTO `analysis-audiowaveform` \\(`source`, `id`, `type`, `value`\\)")
-  expect_match(statement$sql, "ON DUPLICATE KEY UPDATE `value` = VALUES\\(`value`\\);$")
+  #Beside the recording's measurements, in a row of its own where there are none
+  expect_match(statement$sql, "^INSERT INTO `recordings-calculated` \\(`source`, `id`, `peaks_url`\\)")
+  expect_match(statement$sql, "ON DUPLICATE KEY UPDATE `peaks_url` = VALUES\\(`peaks_url`\\);$")
   expect_false(grepl("o'brien", statement$sql, fixed=TRUE))
   expect_identical(statement$params,
-                   list("o'brien", "1", "json86pps8bit", "https://files.audioblast.org/peaks/o-brien/1.json"))
+                   list("o'brien", "1", "https://files.audioblast.org/peaks/o-brien/1.json"))
 })
 
-test_that("a recording's peaks are looked up by its source, id and their type", {
-  mocked <- mockDB(peaksURL("db", "unp", "1"), rows=someRows(value="https://example.org/1.json"))
+test_that("a recording's peaks are looked up by its source and id", {
+  mocked <- mockDB(peaksURL("db", "unp", "1"), rows=someRows(peaks_url="https://example.org/1.json"))
   expect_identical(mocked$value, "https://example.org/1.json")
-  expect_match(mocked$queried, "FROM `analysis-audiowaveform` WHERE `source` = \\? AND `id` = \\? AND `type` = \\?")
+  expect_match(mocked$queried, "SELECT `peaks_url` FROM `recordings-calculated` WHERE `source` = \\? AND `id` = \\?;")
 
   expect_true(is.na(mockDB(peaksURL("db", "unp", "1"))$value))
-  expect_true(is.na(mockDB(peaksURL("db", "unp", "1"), rows=someRows(value=""))$value))
+  expect_true(is.na(mockDB(peaksURL("db", "unp", "1"), rows=someRows(peaks_url=""))$value))
+  expect_true(is.na(mockDB(peaksURL("db", "unp", "1"), rows=someRows(peaks_url=NA_character_))$value))
+})
+
+test_that("deleting all of a recording's analyses forgets where its peaks are", {
+  mocked <- mockDB(deleteAllAnalyses("db", "unp", "1", justR=FALSE))
+  cleared <- Filter(function(s) startsWith(s$sql, "UPDATE `recordings-calculated`"), mocked$executed)
+  expect_length(cleared, 1)
+  expect_match(cleared[[1]]$sql, "SET `peaks_url` = NULL WHERE `source` = \\? AND `id` = \\?;$")
+  expect_identical(cleared[[1]]$params, list("unp", "1"))
+
+  #Only analyses made by this package, which peaks are not, by default
+  mocked <- mockDB(deleteAllAnalyses("db", "unp", "1"))
+  expect_false(any(vapply(mocked$executed, function(s) grepl("peaks_url", s$sql, fixed=TRUE), TRUE)))
 })
 
 #waveform_peaks() as an agent runs it: peaks served from a directory, with
@@ -281,14 +294,14 @@ test_that("peaks are made, put where they are served from, and their address wri
 
   expect_identical(mocked$value, "measured")
   expect_true(file.exists(file.path(mocked$dir, "peaks", "bio.acousti.ca", "10753.json")))
-  expect_identical(onlyStatement(mocked)$params[[4]],
+  expect_identical(onlyStatement(mocked)$params[[3]],
                    "https://files.audioblast.org/peaks/bio.acousti.ca/10753.json")
 })
 
 test_that("a recording that has peaks keeps them, unless they are to be made again", {
   wav <- aWave()
   on.exit(unlink(wav))
-  had <- someRows(value="https://files.audioblast.org/peaks/bio.acousti.ca/10753.json")
+  had <- someRows(peaks_url="https://files.audioblast.org/peaks/bio.acousti.ca/10753.json")
 
   mocked <- peaksRun(wav, rows=had)
   expect_identical(mocked$value, "kept")

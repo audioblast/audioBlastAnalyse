@@ -1,10 +1,10 @@
 #' Waveform peaks of a recording
 #'
 #' Makes the waveform peaks of the file a recording is held in, puts them where
-#' they are served from, and writes where that is to the
-#' `analysis-audiowaveform` table, from which the API gives them as the
-#' recording's `peaks_url`. A player draws the recording's waveform from them
-#' while the audio itself is still on its way.
+#' they are served from, and writes where that is as the recording's
+#' `peaks_url` in `recordings-calculated`, from which the API gives it. A
+#' player draws the recording's waveform from them while the audio itself is
+#' still on its way.
 #'
 #' The peaks are made by BBC audiowaveform: the minimum and maximum of each
 #' 1/86 s of the recording, mixed to one channel, at 8 bits, as audiowaveform's
@@ -74,13 +74,6 @@ waveform_peaks <- function(db, source, id, path, force=FALSE, verbose=FALSE) {
   return(invisible("measured"))
 }
 
-#The kind of peaks made, as `analysis-audiowaveform` names it: JSON, 86 points
-#a second, 8 bits. Peaks of another resolution would be another type, beside
-#these rather than instead of them.
-peaksType <- function() {
-  return("json86pps8bit")
-}
-
 #Points a second. A player drawing 344 pixels a second (BioAcoustica's) gives
 #each point four of them.
 peaksPerSecond <- function() {
@@ -105,20 +98,22 @@ hasAudiowaveform <- function() {
 #costs less than never making them
 peaksURL <- function(db, source, id) {
   found <- abdbGetQuery(db,
-    "SELECT `value` FROM `analysis-audiowaveform` WHERE `source` = ? AND `id` = ? AND `type` = ?;",
-    params=list(source, id, peaksType()))
+    "SELECT `peaks_url` FROM `recordings-calculated` WHERE `source` = ? AND `id` = ?;",
+    params=list(source, id))
   if (is.null(found) || nrow(found) == 0 || is.na(found[1, 1]) || !nzchar(found[1, 1])) {
     return(NA_character_)
   }
   return(as.character(found[1, 1]))
 }
 
-#Writes where a recording's peaks are, over where they were
+#Writes where a recording's peaks are, over where they were. A recording not
+#yet measured has no row in recordings-calculated, so it is given one holding
+#only this, which measuring it fills in.
 writePeaks <- function(db, source, id, url) {
   return(abdbExecute(db, paste(
-    "INSERT INTO `analysis-audiowaveform` (`source`, `id`, `type`, `value`) VALUES (?, ?, ?, ?)",
-    "ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);"),
-    params=list(source, id, peaksType(), url)))
+    "INSERT INTO `recordings-calculated` (`source`, `id`, `peaks_url`) VALUES (?, ?, ?)",
+    "ON DUPLICATE KEY UPDATE `peaks_url` = VALUES(`peaks_url`);"),
+    params=list(source, id, url)))
 }
 
 #Makes the peaks of the file at path into out, giving whether it could. A file
