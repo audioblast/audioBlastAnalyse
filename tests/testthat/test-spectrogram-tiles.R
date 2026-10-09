@@ -89,6 +89,34 @@ test_that("the manifest describes every level and its peaks, as make-tiles.sh wr
   expect_equal(sapply(manifest$peaks, `[[`, "samplesPerPixel"), c(512, 2048, 8192))
 })
 
+test_that("the manifest of several channels lists each one's tiles and peaks as a view, as make-tiles.sh writes it", {
+  lines <- spectrogramManifest(44100, 70 * 44100, 5168, 256, c(512, 2048), 0, spectrogramSettings(), views=2)
+  manifest <- rjson::fromJSON(paste(lines, collapse="\n"))
+  expect_equal(manifest$version, 1.1)
+  expect_equal(manifest$channelCount, 2)
+  expect_equal(manifest$channels, c(0, 1))
+  expect_null(manifest$channel)
+  #The mix is the manifest's own levels and peaks, as one channel is
+  expect_identical(sapply(manifest$levels, `[[`, "tiles"), c("512/{index}.jpg", "2048/{index}.jpg"))
+  expect_identical(sapply(manifest$peaks, `[[`, "url"), c("peaks-512.json", "peaks-2048.json"))
+  expect_length(manifest$views, 2)
+  for (view in 0:1) {
+    own <- manifest$views[[view + 1]]
+    expect_equal(own$channels, view)
+    expect_identical(sapply(own$levels, `[[`, "tiles"), paste0("ch", view, "/", c(512, 2048), "/{index}.jpg"))
+    expect_identical(sapply(own$peaks, `[[`, "url"), paste0("ch", view, "/peaks-", c(512, 2048), ".json"))
+    #At the same levels as the mix
+    expect_equal(lapply(own$levels, `[[<-`, "tiles", NULL), lapply(manifest$levels, `[[<-`, "tiles", NULL))
+  }
+
+  #One channel's is as it was, of version 1
+  one <- rjson::fromJSON(paste(spectrogramManifest(44100, 70 * 44100, 5168, 256, c(512, 2048), 1,
+                                                   spectrogramSettings()), collapse="\n"))
+  expect_equal(c(one$version, one$channel), c(1, 1))
+  expect_null(one$views)
+  expect_null(one$channels)
+})
+
 test_that("tiles are put under their source, id and how they were made", {
   expect_identical(spectrogramPath("bio.acousti.ca", "10753"),
                    "spectrograms/bio.acousti.ca/10753/jpg60s86pps256h-2026-10b/")
@@ -98,9 +126,17 @@ test_that("tiles are put under their source, id and how they were made", {
   expect_identical(spectrogramPath("bio.acousti.ca", "51959", 200000),
                    "spectrograms/bio.acousti.ca/51959/jpg15s344pps256h-2026-10b/")
   expect_identical(spectrogramPath("bio.acousti.ca", "10753", 96000), spectrogramPath("bio.acousti.ca", "10753"))
+  #A recording of several channels is tiled as their mix and each on its own,
+  #so its tiles are put apart from those of its first channel alone
+  expect_identical(spectrogramPath("bio.acousti.ca", "11481", 44100, 2),
+                   "spectrograms/bio.acousti.ca/11481/jpg60s86pps256h2ch-2026-10b/")
+  expect_identical(spectrogramType(250000, 4), "jpg15s344pps256h4ch-2026-10b")
+  expect_identical(spectrogramType(44100, 1), spectrogramType())
+  expect_identical(spectrogramType(44100, NA), spectrogramType())
   #The type is kept in a varchar(45)
   expect_lte(nchar(spectrogramType()), 45)
   expect_lte(nchar(spectrogramType(200000)), 45)
+  expect_lte(nchar(spectrogramType(384000, 64)), 45)
 })
 
 test_that("above 96 kHz the finest level is four times finer, in tiles four times shorter", {
@@ -210,17 +246,24 @@ test_that("a recording's tiles are looked up by its source and id, and count onl
   fine <- ultra("jpg15s344pps256h-2026-10b")
   expect_true(is.na(mockDB(spectrogramURL("db", "unp", "2", 200000), rows=someRows(spectrogram_url=coarse))$value))
   expect_identical(mockDB(spectrogramURL("db", "unp", "2", 200000), rows=someRows(spectrogram_url=fine))$value, fine)
+
+  #Of several channels, only tiles of them all count, not those of the first alone
+  stereo <- function(type) paste0("https://files.audioblast.org/spectrograms/unp/3/", type, "/index.json")
+  first <- stereo("jpg60s86pps256h-2026-10b")
+  every <- stereo("jpg60s86pps256h2ch-2026-10b")
+  expect_true(is.na(mockDB(spectrogramURL("db", "unp", "3", 44100, 2), rows=someRows(spectrogram_url=first))$value))
+  expect_identical(mockDB(spectrogramURL("db", "unp", "3", 44100, 2), rows=someRows(spectrogram_url=every))$value, every)
 })
 
 #spectrogram_tiles() as an agent runs it: tiles served from a directory, with
-#ffmpeg stood in for
-tilesRun <- function(path, rows=list(), count=2, force=FALSE) {
+#ffmpeg stood in for, the recording's sample rate and channels as given
+tilesRun <- function(path, rows=list(), count=2, force=FALSE, shape=list(rate=44100, channels=1)) {
   dir <- tempfile("served")
   withr::defer(unlink(dir, recursive=TRUE), envir=parent.frame())
   withr::local_envvar(AUDIOBLAST_FILES_DIR=dir, AUDIOBLAST_FILES_RSYNC=NA,
                       AUDIOBLAST_FILES_URL="https://files.audioblast.org/")
   fake <- fakeTiles(count)
-  local_mocked_bindings(hasFfmpeg=function() TRUE, spectrogramTiles=fake$make)
+  local_mocked_bindings(hasFfmpeg=function() TRUE, spectrogramTiles=fake$make, probeShape=function(path) shape)
   mocked <- mockDB(spectrogram_tiles("db", "bio.acousti.ca", "10753", path, force=force), rows=rows)
   mocked$dir <- dir
   mocked$made <- fake$calls()
@@ -254,6 +297,23 @@ test_that("a recording that has tiles keeps them, unless they are to be made aga
   #Tiles made another way are made again, as these are now
   older <- someRows(spectrogram_url="https://files.audioblast.org/spectrograms/bio.acousti.ca/10753/t/index.json")
   expect_identical(tilesRun(wav, rows=older)$value, "measured")
+})
+
+test_that("a recording of several channels has tiles of them all, and those of its first alone are made again", {
+  wav <- aWave()
+  on.exit(unlink(wav), add=TRUE)
+  stereo <- list(rate=44100, channels=2)
+  mocked <- tilesRun(wav, shape=stereo)
+  expect_identical(mocked$value, "measured")
+  expect_identical(onlyStatement(mocked)$params[[3]],
+                   "https://files.audioblast.org/spectrograms/bio.acousti.ca/10753/jpg60s86pps256h2ch-2026-10b/index.json")
+
+  manifest <- function(rate, channels) {
+    someRows(spectrogram_url=paste0("https://files.audioblast.org/",
+                                    spectrogramPath("bio.acousti.ca", "10753", rate, channels), "index.json"))
+  }
+  expect_identical(tilesRun(wav, rows=manifest(44100, 1), shape=stereo)$value, "measured")
+  expect_identical(tilesRun(wav, rows=manifest(44100, 2), shape=stereo)$value, "kept")
 })
 
 test_that("a recording no tiles can be made of, or that was never downloaded, is done with", {
@@ -322,6 +382,7 @@ test_that("ffmpeg itself makes tiles whose every column is where it should be in
   for (rate in c(44100, 48000)) {
     wav <- aClickTrain(rate)
     out <- tempfile("tiles")
+    expect_identical(probeShape(wav), list(rate=rate, channels=1L))
     files <- spectrogramTiles(wav, out)
     spc <- samplesPerColumn(rate, 86, 512)
     expect_identical(files, c(paste0(spc, "/", 0:1, ".jpg"), paste0(4 * spc, "/0.jpg"),
@@ -403,10 +464,57 @@ test_that("ffmpeg itself makes tiles four times finer above 96 kHz, every click 
   expect_equal(high[(c(0, 10) * rate) %/% spc + 1], c(30000, 30000))
 })
 
+#A recording of two channels, a tone of 2 kHz on the left and one of 8 kHz on
+#the right, at 44.1 kHz
+aStereoTones <- function(seconds=70, rate=44100) {
+  at <- seq(0, seconds * rate - 1) / rate
+  path <- tempfile(fileext=".wav")
+  tuneR::writeWave(tuneR::Wave(left=round(16000 * sin(2 * pi * 2000 * at)),
+                               right=round(16000 * sin(2 * pi * 8000 * at)),
+                               samp.rate=rate, bit=16, pcm=TRUE), path)
+  return(path)
+}
+
+test_that("ffmpeg itself tiles a stereo recording as its channels mixed, and each on its own as a view", {
+  skip_if_not(hasFfmpeg(), "ffmpeg is not installed")
+  wav <- aStereoTones()
+  out <- tempfile("tiles")
+  on.exit(unlink(c(wav, out), recursive=TRUE), add=TRUE)
+  expect_identical(probeShape(wav), list(rate=44100, channels=2L))
+  files <- spectrogramTiles(wav, out)
+  set <- c("512/0.jpg", "512/1.jpg", "2048/0.jpg", "peaks-512.json", "peaks-2048.json")
+  expect_identical(files, c(set, paste0("ch0/", c(set, "index.json")), paste0("ch1/", c(set, "index.json"))))
+
+  manifest <- rjson::fromJSON(file=file.path(out, "index.json"))
+  expect_equal(c(manifest$version, manifest$channelCount), c(1.1, 2))
+  expect_identical(sapply(manifest$views, function(view) view$levels[[1]]$tiles),
+                   c("ch0/512/{index}.jpg", "ch1/512/{index}.jpg"))
+  #Each channel's set is one of its own, as tiles of that channel alone are
+  for (view in 0:1) {
+    own <- rjson::fromJSON(file=file.path(out, paste0("ch", view), "index.json"))
+    expect_equal(c(own$version, own$channel), c(1, view))
+    expect_equal(own$duration, manifest$duration)
+  }
+
+  #The middle column of each: loud (dark) at its channels' tones, silent
+  #(white) at the other's
+  loudest <- function(dir, hz) {
+    pixels <- tilePixels(file.path(out, dir, "512", "0.jpg"))
+    row <- round(256 * (1 - hz / 22050) - 0.5) + 1
+    return(min(pixels[(row - 3):(row + 3), ncol(pixels) %/% 2 + 1]))
+  }
+  for (shown in list(list(dir=".", left=TRUE, right=TRUE), list(dir="ch0", left=TRUE, right=FALSE),
+                     list(dir="ch1", left=FALSE, right=TRUE))) {
+    expect_identical(loudest(shown$dir, 2000) < 128, shown$left, label=paste(shown$dir, "at 2 kHz"))
+    expect_identical(loudest(shown$dir, 8000) < 128, shown$right, label=paste(shown$dir, "at 8 kHz"))
+  }
+})
+
 test_that("ffmpeg itself makes no tiles of what is not audio", {
   skip_if_not(hasFfmpeg(), "ffmpeg is not installed")
   notAudio <- aFile()
   out <- tempfile("tiles")
   on.exit(unlink(c(notAudio, out), recursive=TRUE), add=TRUE)
+  expect_identical(probeShape(notAudio), list(rate=NA_real_, channels=NA_integer_))
   expect_null(spectrogramTiles(notAudio, out))
 })

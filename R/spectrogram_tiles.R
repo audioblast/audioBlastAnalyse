@@ -11,8 +11,8 @@
 #' wavesurfer-tiled-spectrogram, whose `tools/make-tiles.sh` makes the same
 #' tiles, and whose SPEC.md describes them).
 #'
-#' The tiles are made by ffmpeg's showspectrumpic from the first channel, at the
-#' file's own sample rate:
+#' The tiles are made by ffmpeg's showspectrumpic, at the file's own sample
+#' rate:
 #'
 #' * 256 rows, from a 512-point FFT with a Hann window;
 #' * about 86 columns a second in the finest level, each a whole number of
@@ -31,12 +31,19 @@
 #' the BBC audiowaveform JSON format at 16 bits. They are made as well as those
 #' waveform_peaks() makes, not instead of them.
 #'
+#' A recording of more than one channel is tiled as their mix, the mean of
+#' their samples, and each channel is tiled on its own too, with its own peaks,
+#' in `ch0/`, `ch1/` and so on, at the same levels. The manifest lists them as
+#' views (its version 1.1), so that a player can show the mix, one channel, or
+#' each above another. A recording of one channel is tiled as it is.
+#'
 #' They are put at `spectrograms/<source>/<id>/<type>/`, the source and id named
 #' as the download cache names them (see safeName()) and the type saying how
-#' they were made (spectrogramType(), which depends on the file's sample rate):
-#' each level's tiles in a directory named by its samples a column, the peaks
-#' beside them, and the manifest, `index.json`, put last. Where they are put is
-#' as for waveform_peaks().
+#' they were made (spectrogramType(), which depends on the file's sample rate
+#' and its channels): each level's tiles in a directory named by its samples a
+#' column, the peaks beside them, each channel's in its own directory, and the
+#' manifest, `index.json`, put last. Where they are put is as for
+#' waveform_peaks().
 #'
 #' @param db database connector
 #' @param source Source
@@ -66,9 +73,9 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
     return(invisible("unmeasurable"))
   }
   #How tiles are made, and so which count as made already, depends on the
-  #file's sample rate
-  rate <- probeRate(path)
-  if (!force && !is.na(spectrogramURL(db, source, id, rate))) {
+  #file's sample rate and its channels
+  shape <- probeShape(path)
+  if (!force && !is.na(spectrogramURL(db, source, id, shape$rate, shape$channels))) {
     if (verbose) print(paste("Already has spectrogram tiles:", source, id))
     return(invisible("kept"))
   }
@@ -82,7 +89,7 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
   }
 
   names <- c(files, "index.json")
-  url <- publishFiles(file.path(out, names), paste0(spectrogramPath(source, id, rate), names))
+  url <- publishFiles(file.path(out, names), paste0(spectrogramPath(source, id, shape$rate, shape$channels), names))
   if (is.na(url)) {
     warning(paste("Could not put the spectrogram tiles of", source, id, "where they are served from"))
     return(invisible("retry"))
@@ -95,14 +102,22 @@ spectrogram_tiles <- function(db, source, id, path, force=FALSE, verbose=FALSE) 
   return(invisible("measured"))
 }
 
-#How the tiles of a recording at this sample rate are made, as the directory
-#they are put in names them: JPEG, the finest level's tile length and columns
-#a second, 256 rows, and the calibration of their loudness and levels. Tiles
-#made another way go in another directory, and replace these as the
-#recording's spectrogram_url.
-spectrogramType <- function(rate=NA) {
-  if (finerTiles(rate)) return("jpg15s344pps256h-2026-10b")
-  return("jpg60s86pps256h-2026-10b")
+#How the tiles of a recording at this sample rate, of this many channels, are
+#made, as the directory they are put in names them: JPEG, the finest level's
+#tile length and columns a second, 256 rows, the channels where there are
+#more than one (mixed, and each on its own), and the calibration of their
+#loudness and levels. Tiles made another way go in another directory, and
+#replace these as the recording's spectrogram_url.
+spectrogramType <- function(rate=NA, channels=1) {
+  type <- if (finerTiles(rate)) "jpg15s344pps256h" else "jpg60s86pps256h"
+  if (manyChannels(channels)) type <- paste0(type, channels, "ch")
+  return(paste0(type, "-2026-10b"))
+}
+
+#Whether a recording of this many channels is tiled as their mix, and each
+#channel on its own
+manyChannels <- function(channels) {
+  return(length(channels) == 1 && !is.na(channels) && channels > 1)
 }
 
 #Whether a recording at this sample rate has its finest level four times
@@ -122,16 +137,19 @@ finestLevel <- function(rate, settings=spectrogramSettings()) {
   return(list(pps=settings$pps, tileSeconds=settings$tileSeconds))
 }
 
-#A file's sample rate, as ffprobe says it, or NA
-probeRate <- function(path) {
-  about <- probeAudio(path, "sample_rate")
-  if (is.null(about)) return(NA_real_)
-  return(suppressWarnings(as.numeric(about$sample_rate)))
+#A file's sample rate and its channels, as ffprobe says them, each NA where it
+#does not
+probeShape <- function(path) {
+  about <- probeAudio(path, c("sample_rate", "channels"))
+  if (is.null(about)) return(list(rate=NA_real_, channels=NA_integer_))
+  return(list(rate=suppressWarnings(as.numeric(about$sample_rate)),
+              channels=suppressWarnings(as.integer(about$channels))))
 }
 
-#How the tiles are made, as spectrogramTiles() is told
+#How the tiles are made, as spectrogramTiles() is told. The channel shown is
+#NA for every channel, mixed and each on its own, or one channel's alone.
 spectrogramSettings <- function() {
-  return(list(tileSeconds=60, pps=86, height=256, channel=0, drange=80, limit=-48,
+  return(list(tileSeconds=60, pps=86, height=256, channel=NA, drange=80, limit=-48,
               quality=12, calibration="2026-10b"))
 }
 
@@ -195,23 +213,36 @@ tileLevels <- function(samples, width, spc) {
 #Makes the tiles of the file at path at every level, their peaks and their
 #manifest, into the directory out, giving the names of the files made other
 #than the manifest, "/"-separated under out, in order, or NULL where they
-#could not all be made. The file is first decoded once to a mono WAV of the
-#channel shown, so that each tile can be cut from it exactly, whatever its
-#format.
+#could not all be made. The file is first decoded once to a mono WAV of what
+#is shown, a channel or the channels mixed, so that each tile can be cut from
+#it exactly, whatever its format. A file of more than one channel, unless the
+#settings name one, is tiled as their mix, and then each channel on its own in
+#ch<n>/, a set with its own manifest, listed in the mix's as a view.
 spectrogramTiles <- function(path, out, settings=spectrogramSettings()) {
   about <- probeAudio(path, c("sample_rate", "channels"))
   if (is.null(about)) return(NULL)
   rate <- as.integer(about$sample_rate)
   channels <- as.integer(about$channels)
   if (is.na(rate) || rate < 1) return(NULL)
-  channel <- if (!is.na(channels) && settings$channel < channels) settings$channel else 0
+  #What is shown: the channel asked for, or the only one; or else every channel
+  #mixed, the mean of their samples, and then each channel on its own too
+  #(below)
+  views <- 0
+  channel <- 0
+  if (!is.na(settings$channel)) {
+    if (!is.na(channels) && settings$channel < channels) channel <- settings$channel
+  } else if (manyChannels(channels)) {
+    views <- channels
+  }
+  pan <- paste0("c", channel)
+  if (views > 0) pan <- paste(sprintf("%.9g*c%d", 1 / views, seq_len(views) - 1), collapse="+")
 
   dir.create(out, recursive=TRUE, showWarnings=FALSE)
   mono <- tempfile(fileext=".wav")
   lossless <- tempfile("levels")
   on.exit(unlink(c(mono, lossless), recursive=TRUE), add=TRUE)
   if (!runFfmpeg(c("-v", "error", "-nostdin", "-y", "-i", shQuote(path), "-map", "0:a:0",
-                   "-af", shQuote(paste0("pan=mono|c0=c", channel)),
+                   "-af", shQuote(paste0("pan=mono|c0=", pan)),
                    "-c:a", "pcm_f32le", "-rf64", "auto", shQuote(mono)))) {
     return(NULL)
   }
@@ -232,10 +263,23 @@ spectrogramTiles <- function(path, out, settings=spectrogramSettings()) {
   }
   peaks <- columnPeaks(mono, rate, levels, out)
   if (is.null(peaks)) return(NULL)
+  files <- c(files, peaks)
 
-  writeLF(spectrogramManifest(rate, samples, width, settings$height, levels, channel, settings),
+  #Each channel on its own, in ch<n>/: a set of its own, at the same levels as
+  #the mix, decoded in turn, the mix's WAV let go first
+  unlink(mono)
+  for (view in seq_len(views) - 1) {
+    own <- settings
+    own$channel <- view
+    dir <- paste0("ch", view)
+    made <- spectrogramTiles(path, file.path(out, dir), own)
+    if (is.null(made)) return(NULL)
+    files <- c(files, paste0(dir, "/", c(made, "index.json")))
+  }
+
+  writeLF(spectrogramManifest(rate, samples, width, settings$height, levels, channel, settings, views),
           file.path(out, "index.json"))
-  return(c(files, peaks))
+  return(files)
 }
 
 #The finest level's tiles, analysed from the audio, into out/<spc>/, giving
@@ -408,16 +452,47 @@ writeLF <- function(lines, path) {
 }
 
 #The manifest of a set of tiles and their peaks (see wavesurfer-tiled-spectrogram's
-#SPEC.md), as make-tiles.sh writes it
-spectrogramManifest <- function(rate, samples, width, height, levels, channel, settings) {
+#SPEC.md), as make-tiles.sh writes it: of the channel shown, or, where there
+#are views, of that many channels mixed, listing each channel's set, in
+#ch<n>/, as a view (version 1.1)
+spectrogramManifest <- function(rate, samples, width, height, levels, channel, settings, views=0) {
   more <- ifelse(seq_along(levels) < length(levels), ",", "")
+  levelLines <- function(dir, indent) {
+    return(sprintf(paste0('%s{"width": %d, "height": %d, "tileDuration": %.9f, "tileCount": %.0f, ',
+                          '"tiles": "%s%.0f/{index}.jpg", "mimeType": "image/jpeg", "samplesPerColumn": %.0f, ',
+                          '"pixelsPerSecond": %.6f, "fftSize": %d}%s'),
+                   indent, as.integer(width), as.integer(height), width * levels / rate,
+                   ceiling(samples / (width * levels)), dir, levels, levels, rate / levels,
+                   as.integer(2 * height), more))
+  }
+  peaksLines <- function(dir, indent) {
+    return(sprintf('%s{"pointsPerSecond": %.6f, "samplesPerPixel": %.0f, "url": "%speaks-%.0f.json"}%s',
+                   indent, rate / levels, levels, dir, levels, more))
+  }
+  viewLines <- function(view) {
+    dir <- paste0("ch", view, "/")
+    return(c("    {",
+             sprintf('      "channels": [%d],', as.integer(view)),
+             '      "levels": [',
+             levelLines(dir, "        "),
+             "      ],",
+             '      "peaks": [',
+             peaksLines(dir, "        "),
+             "      ]",
+             paste0("    }", if (view < views - 1) "," else "")))
+  }
+  shown <- sprintf('  "channel": %d,', as.integer(channel))
+  if (views > 0) {
+    shown <- c(sprintf('  "channelCount": %d,', as.integer(views)),
+               sprintf('  "channels": [%s],', paste(seq_len(views) - 1, collapse=", ")))
+  }
   return(c(
     "{",
     '  "type": "tiled-spectrogram",',
-    '  "version": 1,',
+    sprintf('  "version": %s,', if (views > 0) "1.1" else "1"),
     sprintf('  "duration": %.6f,', samples / rate),
     sprintf('  "sampleRate": %d,', as.integer(rate)),
-    sprintf('  "channel": %d,', as.integer(channel)),
+    shown,
     '  "frequencyMin": 0,',
     sprintf('  "frequencyMax": %s,', format(rate / 2, scientific=FALSE)),
     '  "frequencyScale": "linear",',
@@ -426,16 +501,12 @@ spectrogramManifest <- function(rate, samples, width, height, levels, channel, s
     #In wavesurfer.js's terms: ffmpeg measures a sine 2 dB lower than it does
     sprintf('  "dbRange": [%s, %s],', format(settings$limit - 2 - settings$drange), format(settings$limit - 2)),
     '  "levels": [',
-    sprintf(paste0('    {"width": %d, "height": %d, "tileDuration": %.9f, "tileCount": %.0f, ',
-                   '"tiles": "%.0f/{index}.jpg", "mimeType": "image/jpeg", "samplesPerColumn": %.0f, ',
-                   '"pixelsPerSecond": %.6f, "fftSize": %d}%s'),
-            as.integer(width), as.integer(height), width * levels / rate, ceiling(samples / (width * levels)),
-            levels, levels, rate / levels, as.integer(2 * height), more),
+    levelLines("", "    "),
     '  ],',
     '  "peaks": [',
-    sprintf('    {"pointsPerSecond": %.6f, "samplesPerPixel": %.0f, "url": "peaks-%.0f.json"}%s',
-            rate / levels, levels, levels, more),
+    peaksLines("", "    "),
     '  ],',
+    if (views > 0) c('  "views": [', unlist(lapply(seq_len(views) - 1, viewLines)), '  ],'),
     sprintf('  "renderer": {"name": "ffmpeg showspectrumpic", "scale": "log", "drange": %s, "limit": %s},',
             format(settings$drange), format(settings$limit)),
     sprintf('  "calibration": "%s"', settings$calibration),
@@ -444,16 +515,16 @@ spectrogramManifest <- function(rate, samples, width, height, levels, channel, s
 
 #Where a recording's tiles are put, under the directory or destination they
 #are served from and under the address they are served at, ending in "/"
-spectrogramPath <- function(source, id, rate=NA) {
-  return(paste0("spectrograms/", safeName(source), "/", safeName(id), "/", spectrogramType(rate), "/"))
+spectrogramPath <- function(source, id, rate=NA, channels=1) {
+  return(paste0("spectrograms/", safeName(source), "/", safeName(id), "/", spectrogramType(rate, channels), "/"))
 }
 
 #The address of the manifest of a recording's tiles, or NA where it has none,
 #where the tiles it has were made another way (their address names how), or
 #where the database could not be asked: then they are made, as making them
 #twice costs less than never making them. How they are made now depends on
-#the recording's sample rate.
-spectrogramURL <- function(db, source, id, rate=NA) {
+#the recording's sample rate and its channels.
+spectrogramURL <- function(db, source, id, rate=NA, channels=1) {
   found <- abdbGetQuery(db,
     "SELECT `spectrogram_url` FROM `recordings-calculated` WHERE `source` = ? AND `id` = ?;",
     params=list(source, id))
@@ -461,7 +532,7 @@ spectrogramURL <- function(db, source, id, rate=NA) {
     return(NA_character_)
   }
   url <- as.character(found[1, 1])
-  if (!grepl(paste0("/", spectrogramType(rate), "/"), url, fixed=TRUE)) return(NA_character_)
+  if (!grepl(paste0("/", spectrogramType(rate, channels), "/"), url, fixed=TRUE)) return(NA_character_)
   return(url)
 }
 

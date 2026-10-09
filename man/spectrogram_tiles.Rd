@@ -44,8 +44,8 @@ wavesurfer-tiled-spectrogram, whose \code{tools/make-tiles.sh} makes the same
 tiles, and whose SPEC.md describes them).
 }
 \details{
-The tiles are made by ffmpeg's showspectrumpic from the first channel, at the
-file's own sample rate:
+The tiles are made by ffmpeg's showspectrumpic, at the file's own sample
+rate:
 \itemize{
 \item 256 rows, from a 512-point FFT with a Hann window;
 \item about 86 columns a second in the finest level, each a whole number of
@@ -65,10 +65,17 @@ The peaks are the lowest and highest sample of each column of each level, in
 the BBC audiowaveform JSON format at 16 bits. They are made as well as those
 waveform_peaks() makes, not instead of them.
 
+A recording of more than one channel is tiled as their mix, the mean of
+their samples, and each channel is tiled on its own too, with its own peaks,
+in \verb{ch0/}, \verb{ch1/} and so on, at the same levels. The manifest lists them as
+views (its version 1.1), so that a player can show the mix, one channel, or
+each above another. A recording of one channel is tiled as it is.
+
 They are put at \verb{spectrograms/<source>/<id>/<type>/}, the source and id named
 as the download cache names them (see safeName()) and the type saying how
-they were made (spectrogramType(), which depends on the file's sample rate):
-each level's tiles in a directory named by its samples a column, the peaks
-beside them, and the manifest, \code{index.json}, put last. Where they are put is
-as for waveform_peaks().
+they were made (spectrogramType(), which depends on the file's sample rate
+and its channels): each level's tiles in a directory named by its samples a
+column, the peaks beside them, each channel's in its own directory, and the
+manifest, \code{index.json}, put last. Where they are put is as for
+waveform_peaks().
 }
