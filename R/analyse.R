@@ -83,7 +83,14 @@ analyse <- function(
   empties <- 0
   #How many times each recording has failed to download, by source and id
   failures <- numeric()
+  #The address of the last recording downloaded from each source, and how many
+  #times in a row the agent has waited for a source that was refusing it
+  lastGood <- character()
+  refusals <- 0
   while (cont) {
+    #A source with download limits is not asked for work while they are reached,
+    #so that no claim is held while the agent waits (see downloadLimits())
+    if (mode=="web" && !debug) waitForBudget(source, verbose)
     if (debug) {
       # Debug mode is used to debug an individual recording
       ss <- fetchRecordingDebug(db, source, id)
@@ -113,6 +120,10 @@ analyse <- function(
     if (mode=="web" && nrow(ss) > 0) {
       type <- if ("type" %in% names(ss)) ss[[1, "type"]] else NA_character_
       tmp <- webFile(ss[1, "file"], ss[[1, "source"]], ss[[1, "id"]], base_dir, verbose, type)
+      if (!is.na(tmp)) {
+        lastGood[ss[[1, "source"]]] <- ss[[1, "file"]]
+        refusals <- 0
+      }
       if (is.na(tmp)) {
         recording <- paste(ss[[1, "source"]], ss[[1, "id"]])
         #A recording being debugged has no claimed tasks to give back
@@ -129,6 +140,24 @@ analyse <- function(
           ss <- ss[0, , drop=FALSE]
           given_back <- TRUE
           pause(spread(10 * failures[recording]))
+        } else if (refusing(ss[[1, "source"]], lastGood)) {
+          #The source will not serve a recording it served this agent before,
+          #so it is refusing the agent, not short of this recording. Its tasks
+          #go back, its attempts start again, and the agent waits, longer each
+          #time, rather than recording as missing everything it asks for until
+          #the source relents: an agent that did that on iNaturalist recorded a
+          #million recordings that were there all along.
+          refusals <- refusals + 1
+          wait <- refusalWait(refusals)
+          warning(paste0(ss[[1, "source"]], " is refusing downloads; gave back ",
+                         recording, " and waiting ", round(wait), " s"))
+          for (i in seq_len(nrow(ss))) {
+            releaseToDo(db, ss[[i, "source"]], ss[[i, "id"]], ss[[i, "task"]], process_id)
+          }
+          failures[recording] <- 0
+          ss <- ss[0, , drop=FALSE]
+          given_back <- TRUE
+          pause(wait)
         } else {
           #A recording that cannot be downloaded however often it is asked for
           #is measured at its address, where there is no file: it is recorded

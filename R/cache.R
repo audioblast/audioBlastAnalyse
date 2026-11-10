@@ -70,7 +70,11 @@ webFile <- function(url, source, id, dir="", verbose=FALSE, type=NA_character_,
   part <- paste0(path, ".", Sys.getpid(), ".part")
   unlink(part)
   if (verbose) print(paste("Downloading:", address))
-  if (!dl_file(address, part)) {
+  finished <- dl_file(address, part)
+  #What the source sent counts against its limits whatever it turns out to be
+  #(see downloadLimits())
+  recordDownload(source, if (file.exists(part)) file.size(part) else 0)
+  if (!finished) {
     #What there is of it is not the recording, and is neither kept nor read
     unlink(part)
     if (sourceHasNot(answer$status)) {
@@ -249,6 +253,8 @@ repairCache <- function(recordings, dir="", verbose=FALSE, age=86400) {
   paths <- rep(NA_character_, nrow(recordings))
   for (i in seq_len(nrow(recordings))) {
     type <- if ("type" %in% names(recordings)) recordings[[i, "type"]] else NA_character_
+    #Fetched again, and so counted against the source's limits like any download
+    waitForBudget(recordings[[i, "source"]], verbose)
     paths[i] <- webFile(recordings[i, "file"], recordings[[i, "source"]],
                         recordings[[i, "id"]], dir, verbose, type, refetch=TRUE)
   }
